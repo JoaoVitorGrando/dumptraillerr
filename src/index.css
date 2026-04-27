@@ -1,0 +1,97 @@
+/* ----------------------------------------------------------------
+   Global styles for the Dump Trailer Rental landing page
+   ---------------------------------------------------------------- */
+
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-brand-light text-brand-dark font-sans antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Make sure media never breaks the layout horizontally */
+  img,
+  svg,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-tight;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+
+  /* Native form controls feel cleaner on mobile */
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
+}
+
+@layer components {
+  /* Primary CTA button (yellow) */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-brand-yellow
+           px-5 py-3 sm:px-6 text-sm sm:text-base font-semibold text-brand-dark uppercase tracking-wide
+           transition-all duration-200 shadow-glow
+           hover:bg-yellow-400 hover:-translate-y-0.5 active:translate-y-0
+           focus:outline-none focus:ring-4 focus:ring-brand-yellow/40;
+  }
+
+  /* Secondary CTA button (dark / outline on light bg) */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border-2
+           border-brand-dark px-5 py-3 sm:px-6 text-sm sm:text-base font-semibold text-brand-dark uppercase
+           tracking-wide transition-all duration-200
+           hover:bg-brand-dark hover:text-white;
+  }
+
+  /* Outline button used over dark hero backgrounds */
+  .btn-outline-light {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border-2
+           border-white/80 px-5 py-3 sm:px-6 text-sm sm:text-base font-semibold text-white uppercase
+           tracking-wide transition-all duration-200
+           hover:bg-white hover:text-brand-dark;
+  }
+
+  .section-title {
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold uppercase leading-[1.05];
+  }
+
+  .section-eyebrow {
+    @apply inline-block text-brand-yellow font-semibold uppercase tracking-[0.18em] text-xs sm:text-sm mb-3;
+  }
+
+  .container-page {
+    @apply w-full max-w-none px-4 sm:px-6 lg:px-10 2xl:px-14;
+  }
+}
+
+/* Subtle pattern for dark sections */
+.bg-grid-dark {
+  background-color: #0e0e10;
+  background-image: linear-gradient(
+      rgba(255, 184, 0, 0.04) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 184, 0, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
