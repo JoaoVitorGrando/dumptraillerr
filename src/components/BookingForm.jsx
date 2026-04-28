@@ -443,7 +443,7 @@ function Summary({ trailer, data }) {
   return (
     <div className="rounded-2xl bg-brand-dark text-white p-5 sm:p-6 md:p-8 shadow-xl">
       <div className="flex items-center gap-3">
-        <FaguBadge size="md" variant="yellow" />
+        <FaguBadge size="md" variant="dark" />
         <div className="min-w-0">
           <p className="text-[11px] sm:text-xs uppercase tracking-wider text-white/60">
             Booking Summary

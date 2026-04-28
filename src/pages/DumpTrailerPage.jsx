@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Trailers from "../components/Trailers";
@@ -41,14 +41,10 @@ export default function DumpTrailerPage() {
 
       <main className="flex-1">
         {/* Page hero */}
-        <section className="bg-grid-dark text-white pt-32 sm:pt-36 md:pt-40">
+        <section className="bg-grid-dark text-white pt-24 sm:pt-28 md:pt-32">
           <div className="container-page py-12 sm:py-16 md:py-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div>
-              <Breadcrumb name={service.name} />
-              <span className="mt-4 inline-block rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-brand-yellow text-white">
-                {service.badge}
-              </span>
-              <h1 className="mt-4 font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.05]">
+              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.05]">
                 Dump Trailer Rental{" "}
                 <span className="text-brand-yellow">— Fast, Simple, Secure.</span>
               </h1>
@@ -101,21 +97,5 @@ export default function DumpTrailerPage() {
 
       <Footer />
     </div>
-  );
-}
-
-function Breadcrumb({ name }) {
-  return (
-    <nav aria-label="Breadcrumb" className="text-xs text-white/60">
-      <Link to="/" className="hover:text-brand-yellow">
-        Home
-      </Link>
-      <span className="mx-2">/</span>
-      <Link to="/#services" className="hover:text-brand-yellow">
-        Services
-      </Link>
-      <span className="mx-2">/</span>
-      <span className="text-white/90">{name}</span>
-    </nav>
   );
 }

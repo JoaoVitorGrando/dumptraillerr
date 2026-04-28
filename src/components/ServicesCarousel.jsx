@@ -57,11 +57,11 @@ export default function ServicesCarousel() {
           {/* Edge fades */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-12 bg-gradient-to-r from-white to-transparent z-10"
+            className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-12 bg-gradient-to-r from-white to-transparent z-10 hidden sm:block"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-12 bg-gradient-to-l from-white to-transparent z-10"
+            className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-12 bg-gradient-to-l from-white to-transparent z-10 hidden sm:block"
           />
 
           <ul
@@ -118,14 +118,14 @@ function ServiceCard({ service }) {
       </Link>
 
       <div className="flex flex-col flex-1 p-5">
-        <p className="text-brand-orange font-semibold text-sm">
+        <p className="text-brand-orange font-semibold text-sm min-h-[3.25rem] line-clamp-2">
           {service.tagline}
         </p>
-        <p className="mt-2 text-gray-600 text-sm leading-relaxed line-clamp-3">
+        <p className="mt-2 text-gray-600 text-sm leading-relaxed line-clamp-3 min-h-[4.5rem]">
           {service.short}
         </p>
 
-        <div className="mt-4 flex flex-wrap gap-1.5">
+        <div className="mt-4 flex flex-wrap content-start gap-1.5 min-h-[3.1rem]">
           {service.sizes.slice(0, 4).map((sz) => (
             <span
               key={sz}

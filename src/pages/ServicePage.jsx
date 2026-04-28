@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -16,11 +16,33 @@ import { findService, SERVICES } from "../data/services";
 export default function ServicePage() {
   const { slug } = useParams();
   const service = findService(slug);
+  const otherServicesTrackRef = useRef(null);
 
   // Reset scroll position whenever the route changes so the user lands at the
   // top of the new service page instead of mid-scroll.
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  }, [slug]);
+
+  useEffect(() => {
+    const el = otherServicesTrackRef.current;
+    if (!el) return undefined;
+
+    const autoAdvance = () => {
+      const card = el.querySelector("[data-other-card]");
+      const step = card ? card.clientWidth + 16 : el.clientWidth * 0.85;
+      const maxLeft = el.scrollWidth - el.clientWidth;
+      const nextLeft = el.scrollLeft + step;
+
+      if (nextLeft >= maxLeft - 8) {
+        el.scrollTo({ left: 0, behavior: "smooth" });
+        return;
+      }
+      el.scrollTo({ left: nextLeft, behavior: "smooth" });
+    };
+
+    const timer = window.setInterval(autoAdvance, 2800);
+    return () => window.clearInterval(timer);
   }, [slug]);
 
   if (!service) {
@@ -42,20 +64,10 @@ export default function ServicePage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="bg-grid-dark text-white pt-32 sm:pt-36 md:pt-40">
+        <section className="bg-grid-dark text-white pt-24 sm:pt-28 md:pt-32">
           <div className="container-page py-12 sm:py-16 md:py-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div>
-              <Breadcrumb name={service.name} />
-              <span
-                className={`mt-4 inline-block rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                  service.available
-                    ? "bg-brand-yellow text-white"
-                    : "bg-white/10 text-brand-yellow border border-brand-yellow/40"
-                }`}
-              >
-                {service.badge}
-              </span>
-              <h1 className="mt-4 font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.05]">
+              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.05]">
                 {service.name}
               </h1>
               <p className="mt-3 text-brand-yellow font-semibold text-lg">
@@ -214,9 +226,17 @@ export default function ServicePage() {
               </Link>
             </div>
 
-            <ul className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <ul
+              ref={otherServicesTrackRef}
+              className="mt-8 flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 [scrollbar-width:thin]"
+              style={{ scrollbarColor: "#EB7231 transparent" }}
+            >
               {others.map((s) => (
-                <li key={s.slug}>
+                <li
+                  key={s.slug}
+                  data-other-card
+                  className="snap-start shrink-0 w-[82%] xs:w-[74%] sm:w-[48%] md:w-[38%] lg:w-[30%] xl:w-[24%]"
+                >
                   <Link
                     to={`/services/${s.slug}`}
                     className="group block overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:border-brand-yellow"
@@ -248,22 +268,6 @@ export default function ServicePage() {
 
       <Footer />
     </div>
-  );
-}
-
-function Breadcrumb({ name }) {
-  return (
-    <nav aria-label="Breadcrumb" className="text-xs text-white/60">
-      <Link to="/" className="hover:text-brand-yellow">
-        Home
-      </Link>
-      <span className="mx-2">/</span>
-      <Link to="/#services" className="hover:text-brand-yellow">
-        Services
-      </Link>
-      <span className="mx-2">/</span>
-      <span className="text-white/90">{name}</span>
-    </nav>
   );
 }
 
