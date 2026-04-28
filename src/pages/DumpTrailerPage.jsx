@@ -2,12 +2,8 @@ import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import Benefits from "../components/Benefits";
 import Trailers from "../components/Trailers";
-import HowItWorks from "../components/HowItWorks";
-import Rules from "../components/Rules";
 import BookingForm from "../components/BookingForm";
-import Payment from "../components/Payment";
 import FAQ from "../components/FAQ";
 import { findService } from "../data/services";
 
@@ -43,9 +39,9 @@ export default function DumpTrailerPage() {
     <div className="min-h-screen flex flex-col bg-brand-light">
       <Header />
 
-      <main className="flex-1 pt-32 sm:pt-36 md:pt-40">
+      <main className="flex-1">
         {/* Page hero */}
-        <section className="bg-grid-dark text-white">
+        <section className="bg-grid-dark text-white pt-32 sm:pt-36 md:pt-40">
           <div className="container-page py-12 sm:py-16 md:py-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div>
               <Breadcrumb name={service.name} />
@@ -97,13 +93,9 @@ export default function DumpTrailerPage() {
           </div>
         </section>
 
-        {/* Full marketing flow — concentrated here, removed from the home */}
-        <Benefits />
+        {/* Lean flow: only core conversion sections */}
         <Trailers />
-        <HowItWorks />
-        <Rules />
         <BookingForm />
-        <Payment />
         <FAQ />
       </main>
 

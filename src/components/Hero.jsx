@@ -1,6 +1,7 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import heroTrailerPhoto from "../assets/dumptrailler header.jpg";
 import FaguBadge from "./FaguBadge";
+import { SERVICES } from "../data/services";
 
 /* -------------------------------------------------------------------------- */
 /* Hero — FAGU brand introduction                                             */
@@ -34,9 +35,11 @@ export default function Hero() {
             <span className="text-brand-yellow">Every trailer you need.</span>
           </h1>
           <p className="mt-5 sm:mt-6 max-w-2xl text-lg md:text-xl text-white/85 leading-relaxed">
-            FAGU connects roofing crews, contractors and homeowners with the
-            right trailer for every job — starting with our dump trailer fleet
-            (12–18 ft). Owners list, customers book, drivers deliver.
+            We connect you to the right trailer for any job fast, simple, and
+            reliable.
+          </p>
+          <p className="mt-3 max-w-2xl text-base sm:text-lg text-brand-yellow font-semibold">
+            Book now and get your job done without hassle.
           </p>
 
           <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row gap-3">
@@ -68,9 +71,9 @@ export default function Hero() {
           </div>
 
           <div className="mt-8 sm:mt-10 grid grid-cols-3 gap-2 sm:gap-4 max-w-lg">
-            <Trust label="For" value="Owners" />
-            <Trust label="For" value="Customers" />
-            <Trust label="For" value="Drivers" />
+            <Trust label="For Owners" value="Monetize your trailers with ease" />
+            <Trust label="For Customers" value="Book fast and get it delivered" />
+            <Trust label="For Drivers" value="Earn by making local deliveries" />
           </div>
         </div>
 
@@ -98,26 +101,47 @@ function Trust({ label, value }) {
 }
 
 function HeroVisual() {
+  const carouselItems = useMemo(
+    () =>
+      SERVICES.map((service) => ({
+        slug: service.slug,
+        name: service.name,
+        image: service.image,
+      })),
+    []
+  );
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (!carouselItems.length) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % carouselItems.length);
+    }, 2800);
+    return () => window.clearInterval(timer);
+  }, [carouselItems]);
+
+  const activeItem = carouselItems[activeIndex];
+
   return (
-    <div className="relative max-w-md mx-auto lg:max-w-none">
+    <div className="relative max-w-lg mx-auto lg:max-w-none lg:-ml-8 lg:mt-6">
       <div className="absolute -inset-4 rounded-3xl bg-brand-yellow/20 blur-2xl" />
 
-      <div className="relative rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-brand-gray to-brand-dark p-4 sm:p-6 shadow-2xl">
+      <div className="relative rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-brand-gray to-brand-dark p-5 sm:p-7 shadow-2xl">
         <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2 flex-wrap">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-yellow text-brand-dark text-[10px] sm:text-xs font-bold uppercase px-2.5 sm:px-3 py-1 tracking-wider">
             <span className="h-2 w-2 rounded-full bg-brand-dark animate-pulse" />
-            Live · Dump Trailers
+            FAGU · Trailer Fleet
           </span>
           <Link
-            to="/services/dump-trailer"
+            to={activeItem ? `/services/${activeItem.slug}` : "/#services"}
             className="text-white/70 hover:text-brand-yellow text-[10px] sm:text-xs font-semibold"
           >
             See details →
           </Link>
         </div>
         <p className="font-display text-3xl sm:text-4xl font-extrabold text-white leading-tight">
-          Roofing tear-offs,{" "}
-          <span className="text-brand-yellow">delivered.</span>
+          Explore our trailer{" "}
+          <span className="text-brand-yellow">options.</span>
         </p>
 
         <div className="relative mt-4 sm:mt-6 overflow-hidden rounded-xl border border-white/10">
@@ -127,13 +151,35 @@ function HeroVisual() {
             variant="dark"
             className="absolute top-3 left-3 z-20"
           />
-          <img
-            src={heroTrailerPhoto}
-            alt="FAGU dump trailer ready at a job site"
-            loading="eager"
-            decoding="async"
-            className="h-56 sm:h-64 md:h-72 w-full object-cover"
-          />
+          {activeItem && (
+            <>
+              <img
+                src={activeItem.image}
+                alt={activeItem.name}
+                loading="eager"
+                decoding="async"
+                className="h-60 sm:h-72 md:h-80 w-full object-cover transition-all duration-700"
+              />
+              <div className="absolute left-3 right-3 bottom-3 flex items-center justify-between gap-3 z-20">
+                <span className="rounded-full bg-black/55 border border-white/20 px-3 py-1 text-[10px] sm:text-xs uppercase tracking-wider font-semibold text-white">
+                  {activeItem.name}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {carouselItems.map((item, i) => (
+                    <span
+                      key={item.slug}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === activeIndex
+                          ? "w-5 bg-brand-yellow"
+                          : "w-2.5 bg-white/45"
+                      }`}
+                      aria-hidden
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
           <div
             className="absolute inset-0 bg-gradient-to-t from-brand-dark/70 via-brand-dark/20 to-transparent"
             aria-hidden
@@ -146,10 +192,10 @@ function HeroVisual() {
         </div>
 
         <Link
-          to="/services/dump-trailer#booking"
+          to={activeItem ? `/services/${activeItem.slug}` : "/#services"}
           className="btn-primary mt-4 w-full !text-sm"
         >
-          Book a Dump Trailer
+          Explore all trailer options
         </Link>
       </div>
     </div>

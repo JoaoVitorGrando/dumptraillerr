@@ -48,7 +48,7 @@ export default function Header() {
     <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300">
       {/* Promo bar */}
       <div
-        className={`overflow-hidden bg-brand-yellow text-white transition-[max-height,opacity] duration-300 ${
+        className={`promo-bar-attention overflow-hidden bg-brand-yellow text-white transition-[max-height,opacity] duration-300 ${
           scrolled ? "max-h-0 opacity-0" : "max-h-12 opacity-100"
         }`}
         role="region"
@@ -70,7 +70,7 @@ export default function Header() {
             </svg>
             Limited Offer
           </span>
-          <p className="text-[11px] sm:text-sm font-semibold leading-tight">
+          <p className="promo-copy-attention text-[11px] sm:text-sm font-semibold leading-tight">
             <span className="font-extrabold uppercase">Save 50%</span> on your
             second dump trailer for the same job site.{" "}
             <Link
@@ -85,10 +85,8 @@ export default function Header() {
 
       {/* Main nav bar */}
       <div
-        className={`transition-colors duration-300 ${
-          scrolled
-            ? "bg-brand-dark/95 backdrop-blur shadow-lg"
-            : "bg-gradient-to-b from-black/70 to-transparent"
+        className={`bg-brand-dark/80 backdrop-blur-md transition-shadow duration-300 ${
+          scrolled ? "shadow-lg bg-brand-dark/88" : ""
         }`}
       >
         <div className="container-page flex h-24 md:h-28 items-center justify-between gap-3">

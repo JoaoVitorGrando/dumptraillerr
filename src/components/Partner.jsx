@@ -78,7 +78,7 @@ export default function Partner({ initialTab = "owner" }) {
   return (
     <section
       id="partner"
-      className="py-16 sm:py-20 md:py-28 bg-grid-dark text-white"
+      className="pt-32 sm:pt-36 md:pt-40 pb-16 sm:pb-20 md:pb-28 bg-grid-dark text-white"
     >
       <div className="container-page">
         <div className="max-w-3xl">

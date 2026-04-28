@@ -485,12 +485,8 @@ function Summary({ trailer, data }) {
 
       <div className="mt-3 sm:mt-4 flex items-start gap-2 text-[11px] sm:text-xs text-white/70">
         <span className="h-2 w-2 mt-1 shrink-0 rounded-full bg-orange-400 animate-pulse" />
-        <span>Status: reservation pending until payment is confirmed.</span>
+        <span>Status: reservation pending until our team confirms availability.</span>
       </div>
-
-      <a href="#payment" className="btn-primary mt-5 sm:mt-6 w-full">
-        Continue to Payment
-      </a>
     </div>
   );
 }
@@ -561,8 +557,8 @@ function SuccessState({ onReset, data }) {
         >
           Submit Another Request
         </button>
-        <a href="#payment" className="btn-primary w-full sm:w-auto">
-          Continue to Payment
+        <a href="#booking" className="btn-primary w-full sm:w-auto">
+          Review request details
         </a>
       </div>
     </div>

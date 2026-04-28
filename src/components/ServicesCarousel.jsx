@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { SERVICES } from "../data/services";
 
@@ -12,35 +12,27 @@ import { SERVICES } from "../data/services";
 
 export default function ServicesCarousel() {
   const trackRef = useRef(null);
-  const [canPrev, setCanPrev] = useState(false);
-  const [canNext, setCanNext] = useState(true);
-
-  const updateButtons = useCallback(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    setCanPrev(el.scrollLeft > 8);
-    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
-  }, []);
 
   useEffect(() => {
-    updateButtons();
     const el = trackRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", updateButtons, { passive: true });
-    window.addEventListener("resize", updateButtons);
-    return () => {
-      el.removeEventListener("scroll", updateButtons);
-      window.removeEventListener("resize", updateButtons);
-    };
-  }, [updateButtons]);
+    if (!el) return undefined;
 
-  const scrollByCard = (dir) => {
-    const el = trackRef.current;
-    if (!el) return;
-    const card = el.querySelector("[data-card]");
-    const step = card ? card.clientWidth + 16 : el.clientWidth * 0.85;
-    el.scrollBy({ left: dir * step, behavior: "smooth" });
-  };
+    const autoAdvance = () => {
+      const card = el.querySelector("[data-card]");
+      const step = card ? card.clientWidth + 16 : el.clientWidth * 0.85;
+      const maxLeft = el.scrollWidth - el.clientWidth;
+      const nextLeft = el.scrollLeft + step;
+
+      if (nextLeft >= maxLeft - 8) {
+        el.scrollTo({ left: 0, behavior: "smooth" });
+        return;
+      }
+      el.scrollTo({ left: nextLeft, behavior: "smooth" });
+    };
+
+    const timer = window.setInterval(autoAdvance, 2600);
+    return () => window.clearInterval(timer);
+  }, []);
 
   return (
     <section id="services" className="py-16 sm:py-20 md:py-28 bg-white">
@@ -59,19 +51,6 @@ export default function ServicesCarousel() {
             </p>
           </div>
 
-          {/* Desktop arrows */}
-          <div className="hidden md:flex items-center gap-2 self-end">
-            <ArrowButton
-              direction="prev"
-              disabled={!canPrev}
-              onClick={() => scrollByCard(-1)}
-            />
-            <ArrowButton
-              direction="next"
-              disabled={!canNext}
-              onClick={() => scrollByCard(1)}
-            />
-          </div>
         </div>
 
         <div className="relative mt-8 sm:mt-10">
@@ -100,20 +79,6 @@ export default function ServicesCarousel() {
               </li>
             ))}
           </ul>
-        </div>
-
-        {/* Mobile arrows under the carousel */}
-        <div className="mt-4 flex md:hidden items-center justify-center gap-3">
-          <ArrowButton
-            direction="prev"
-            disabled={!canPrev}
-            onClick={() => scrollByCard(-1)}
-          />
-          <ArrowButton
-            direction="next"
-            disabled={!canNext}
-            onClick={() => scrollByCard(1)}
-          />
         </div>
       </div>
     </section>
@@ -206,45 +171,5 @@ function ServiceCard({ service }) {
         </div>
       </div>
     </article>
-  );
-}
-
-function ArrowButton({ direction, disabled, onClick }) {
-  const isPrev = direction === "prev";
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={isPrev ? "Previous services" : "Next services"}
-      className={`grid h-11 w-11 place-items-center rounded-full border transition-colors ${
-        disabled
-          ? "border-gray-200 text-gray-300 cursor-not-allowed"
-          : "border-brand-dark text-brand-dark hover:bg-brand-dark hover:text-white"
-      }`}
-    >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {isPrev ? (
-          <>
-            <line x1="19" y1="12" x2="5" y2="12" />
-            <polyline points="12 19 5 12 12 5" />
-          </>
-        ) : (
-          <>
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <polyline points="12 5 19 12 12 19" />
-          </>
-        )}
-      </svg>
-    </button>
   );
 }

@@ -1,4 +1,4 @@
-import faguLogo from "../assets/logosemfundo.png";
+import faguLogo from "../assets/LOGO1.png";
 
 /* -------------------------------------------------------------------------- */
 /* FaguBadge — circular FAGU mark                                             */

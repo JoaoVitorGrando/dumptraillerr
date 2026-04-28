@@ -108,3 +108,52 @@
     linear-gradient(90deg, rgba(235, 114, 49, 0.05) 1px, transparent 1px);
   background-size: 40px 40px;
 }
+
+/* Promo bar attention effects: moving highlight + subtle text pulse */
+.promo-bar-attention {
+  position: relative;
+  isolation: isolate;
+}
+
+.promo-bar-attention::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.14) 38%,
+    rgba(255, 255, 255, 0.24) 50%,
+    rgba(255, 255, 255, 0.14) 62%,
+    transparent 100%
+  );
+  transform: translateX(-150%);
+  animation: promo-shine 3.2s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.promo-bar-attention > * {
+  position: relative;
+  z-index: 1;
+}
+
+.promo-copy-attention {
+  animation: promo-pulse 1.9s ease-in-out infinite;
+}
+
+@keyframes promo-shine {
+  to {
+    transform: translateX(150%);
+  }
+}
+
+@keyframes promo-pulse {
+  0%,
+  100% {
+    opacity: 0.92;
+  }
+  50% {
+    opacity: 1;
+  }
+}

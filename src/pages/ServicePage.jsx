@@ -40,9 +40,9 @@ export default function ServicePage() {
     <div className="min-h-screen flex flex-col bg-brand-light">
       <Header />
 
-      <main className="flex-1 pt-32 sm:pt-36 md:pt-40">
+      <main className="flex-1">
         {/* Hero */}
-        <section className="bg-grid-dark text-white">
+        <section className="bg-grid-dark text-white pt-32 sm:pt-36 md:pt-40">
           <div className="container-page py-12 sm:py-16 md:py-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div>
               <Breadcrumb name={service.name} />

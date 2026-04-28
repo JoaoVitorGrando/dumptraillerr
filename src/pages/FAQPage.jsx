@@ -13,14 +13,17 @@ export default function FAQPage() {
     <div className="min-h-screen flex flex-col bg-brand-light">
       <Header />
 
-      <main className="flex-1 pt-32 sm:pt-36 md:pt-40">
-        <div className="container-page">
-          <nav aria-label="Breadcrumb" className="text-xs text-gray-500">
-            <Link to="/" className="hover:text-brand-orange">
+      <main className="flex-1">
+        <div className="bg-grid-dark pt-32 sm:pt-36 md:pt-40 pb-3">
+          <nav
+            aria-label="Breadcrumb"
+            className="container-page text-xs text-white/60"
+          >
+            <Link to="/" className="hover:text-brand-yellow">
               Home
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-brand-dark">FAQ</span>
+            <span className="text-white/90">FAQ</span>
           </nav>
         </div>
 
