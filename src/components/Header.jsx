@@ -1,20 +1,35 @@
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import FaguBadge from "./FaguBadge";
+import { SERVICES } from "../data/services";
 
 /* -------------------------------------------------------------------------- */
-/* Header with conversion-focused promo bar                                   */
+/* Header — FAGU Home Services                                                */
+/* -------------------------------------------------------------------------- */
+/* Top-level navigation reflects the new, lean architecture:                  */
+/*   - Home (/)                                                              */
+/*   - Services dropdown -> /services/:slug                                  */
+/*   - Partner (/partner) with role sub-routes                              */
+/*   - FAQ (/faq) and Contact (/contact)                                    */
+/*                                                                            */
+/* The "Reserve Your Trailer" CTA always points at the dump-trailer booking */
+/* anchor — the MVP's main conversion path.                                 */
 /* -------------------------------------------------------------------------- */
 
 const NAV_LINKS = [
-  { href: "#home", label: "Home" },
-  { href: "#trailers", label: "Trailers" },
-  { href: "#how-it-works", label: "How It Works" },
-  { href: "#booking", label: "Booking" },
-  { href: "#faq", label: "FAQ" },
+  { to: "/", label: "Home", end: true },
+  { to: "/partner", label: "Partner" },
+  { to: "/faq", label: "FAQ" },
+  { to: "/contact", label: "Contact" },
 ];
+
+const RESERVE_HREF = "/services/dump-trailer#booking";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -23,11 +38,17 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Close menus whenever the route changes.
+  useEffect(() => {
+    setOpen(false);
+    setServicesOpen(false);
+  }, [pathname]);
+
   return (
     <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300">
-      {/* Promo bar with discount offer — disappears on scroll to keep header compact */}
+      {/* Promo bar */}
       <div
-        className={`overflow-hidden bg-brand-yellow text-brand-dark transition-[max-height,opacity] duration-300 ${
+        className={`overflow-hidden bg-brand-yellow text-white transition-[max-height,opacity] duration-300 ${
           scrolled ? "max-h-0 opacity-0" : "max-h-12 opacity-100"
         }`}
         role="region"
@@ -51,13 +72,13 @@ export default function Header() {
           </span>
           <p className="text-[11px] sm:text-sm font-semibold leading-tight">
             <span className="font-extrabold uppercase">Save 50%</span> on your
-            second trailer for the same job site.{" "}
-            <a
-              href="#rules"
+            second dump trailer for the same job site.{" "}
+            <Link
+              to="/services/dump-trailer#rules"
               className="underline underline-offset-2 hover:no-underline font-bold whitespace-nowrap"
             >
               See terms
-            </a>
+            </Link>
           </p>
         </div>
       </div>
@@ -70,49 +91,104 @@ export default function Header() {
             : "bg-gradient-to-b from-black/70 to-transparent"
         }`}
       >
-        <div className="container-page flex h-16 md:h-20 items-center justify-between gap-3">
-          <a
-            href="#home"
-            className="flex items-center gap-2 text-white min-w-0"
-            aria-label="Dump Trailer Rental — Home"
+        <div className="container-page flex h-24 md:h-28 items-center justify-between gap-3">
+          <Link
+            to="/"
+            className="flex items-center text-white min-w-0 flex-1"
+            aria-label="FAGU Home Services — Home"
           >
-            <span className="grid h-9 w-9 sm:h-10 sm:w-10 shrink-0 place-items-center rounded-md bg-brand-yellow text-brand-dark font-black text-base sm:text-xl">
-              DT
-            </span>
-            <span className="font-display text-base sm:text-lg md:text-xl font-extrabold uppercase tracking-wide whitespace-nowrap">
-              <span className="hidden xs:inline">Dump Trailer</span>
-              <span className="xs:hidden">DT</span>
-              <span className="text-brand-yellow">.</span>Rental
-            </span>
-          </a>
+            <FaguBadge
+              size="xl"
+              bare
+              className="!h-20 !w-20 sm:!h-28 sm:!w-28 md:!h-32 md:!w-32"
+            />
+          </Link>
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-5 xl:gap-7">
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
+            <Link
+              to="/"
+              className="text-white/90 hover:text-brand-yellow font-medium transition-colors"
+            >
+              Home
+            </Link>
+
+            {/* Services dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => setServicesOpen(true)}
+              onMouseLeave={() => setServicesOpen(false)}
+            >
+              <button
+                type="button"
+                onClick={() => setServicesOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={servicesOpen}
+                className="text-white/90 hover:text-brand-yellow font-medium transition-colors inline-flex items-center gap-1"
+              >
+                Services
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`transition-transform ${
+                    servicesOpen ? "rotate-180" : ""
+                  }`}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {servicesOpen && (
+                <div
+                  role="menu"
+                  className="absolute top-full left-0 pt-3 min-w-[260px]"
+                >
+                  <div className="rounded-xl border border-white/10 bg-brand-dark/95 backdrop-blur shadow-2xl overflow-hidden">
+                    {SERVICES.map((s) => (
+                      <Link
+                        key={s.slug}
+                        to={`/services/${s.slug}`}
+                        role="menuitem"
+                        className="flex items-center justify-between gap-3 px-4 py-3 text-sm text-white/90 hover:bg-white/5 hover:text-brand-yellow border-b border-white/5 last:border-b-0"
+                      >
+                        <span className="font-semibold">{s.name}</span>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider ${
+                            s.available
+                              ? "text-brand-yellow"
+                              : "text-white/40"
+                          }`}
+                        >
+                          {s.available ? "Live" : "Soon"}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {NAV_LINKS.filter((l) => l.to !== "/").map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
                 className="text-white/90 hover:text-brand-yellow font-medium transition-colors"
               >
                 {l.label}
-              </a>
+              </Link>
             ))}
 
-            {/* Inline discount mention next to CTA */}
-            <div className="hidden xl:flex flex-col items-end leading-tight">
-              <span className="text-[10px] uppercase tracking-wider text-brand-yellow font-bold">
-                Save 50% on trailer #2
-              </span>
-              <span className="text-[10px] text-white/60">
-                Same job site, same project
-              </span>
-            </div>
-
             <a
-              href="#booking"
+              href={RESERVE_HREF}
               className="btn-primary !py-2.5 !px-5 !text-xs xl:!text-sm"
             >
-              Reserve Your Trailer
+              Reserve a Trailer
             </a>
           </nav>
 
@@ -154,45 +230,58 @@ export default function Header() {
       {/* Mobile drawer */}
       <div
         className={`lg:hidden overflow-hidden bg-brand-dark border-t border-white/10 transition-[max-height] duration-300 ${
-          open ? "max-h-[32rem]" : "max-h-0"
+          open ? "max-h-[44rem]" : "max-h-0"
         }`}
       >
         <nav className="container-page flex flex-col py-3">
-          {NAV_LINKS.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              onClick={() => setOpen(false)}
+          <Link
+            to="/"
+            className="py-3 text-white/90 border-b border-white/5 hover:text-brand-yellow text-base font-semibold"
+          >
+            Home
+          </Link>
+
+          <div className="py-3 border-b border-white/5">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-white/45 font-semibold mb-2">
+              Services
+            </p>
+            <ul className="grid grid-cols-1 gap-1">
+              {SERVICES.map((s) => (
+                <li key={s.slug}>
+                  <Link
+                    to={`/services/${s.slug}`}
+                    className="flex items-center justify-between rounded-md px-2 py-2 text-white/85 hover:bg-white/5 hover:text-brand-yellow"
+                  >
+                    <span>{s.name}</span>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider ${
+                        s.available ? "text-brand-yellow" : "text-white/40"
+                      }`}
+                    >
+                      {s.available ? "Live" : "Soon"}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {NAV_LINKS.filter((l) => l.to !== "/").map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
               className="py-3 text-white/90 border-b border-white/5 hover:text-brand-yellow text-base"
             >
               {l.label}
-            </a>
+            </Link>
           ))}
 
-          {/* Discount call-out inside the mobile drawer */}
-          <div className="mt-4 rounded-lg border border-brand-yellow/40 bg-brand-yellow/10 px-4 py-3">
-            <p className="text-brand-yellow font-bold text-sm">
-              Save 50% on your second trailer
-            </p>
-            <p className="text-white/70 text-xs mt-0.5">
-              Same job site, same project. Booking is confirmed only after
-              prepayment.
-            </p>
-          </div>
-
           <a
-            href="#booking"
+            href={RESERVE_HREF}
             onClick={() => setOpen(false)}
             className="btn-primary mt-3 w-full"
           >
-            Reserve Your Trailer
-          </a>
-          <a
-            href="#booking"
-            onClick={() => setOpen(false)}
-            className="btn-outline-light mt-2 mb-1 w-full"
-          >
-            Check Availability
+            Reserve a Trailer
           </a>
         </nav>
       </div>

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { TRAILERS } from "../data/trailers";
+import { submitLead } from "../services/leads";
+import { isDemoMode } from "../config/api";
+import FaguBadge from "./FaguBadge";
 
 /* -------------------------------------------------------------------------- */
 /* Booking form                                                               */
@@ -102,24 +105,25 @@ export default function BookingForm() {
     return errs;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate(data);
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
-      // Focus the first invalid input for accessibility
       const firstKey = Object.keys(errs)[0];
       const firstEl = document.querySelector(`[name="${firstKey}"]`);
       if (firstEl?.focus) firstEl.focus();
       return;
     }
     setSubmitting(true);
-    // Simulate async submission
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-      window.scrollTo({ top: window.scrollY, behavior: "smooth" });
-    }, 900);
+    await submitLead("booking", {
+      ...data,
+      trailerName: selectedTrailer?.name,
+      trailerPrice: selectedTrailer?.price,
+    });
+    setSubmitting(false);
+    setSubmitted(true);
+    window.scrollTo({ top: window.scrollY, behavior: "smooth" });
   };
 
   const resetForm = () => {
@@ -292,6 +296,12 @@ export default function BookingForm() {
                   <p className="text-xs sm:text-sm text-gray-500">
                     By submitting this form, you agree to be contacted about
                     your booking.
+                    {isDemoMode && (
+                      <span className="block mt-0.5 text-amber-600">
+                        Demo mode — connect a GHL booking webhook in{" "}
+                        <code>.env</code> to deliver leads.
+                      </span>
+                    )}
                   </p>
                   <button
                     type="submit"
@@ -433,14 +443,12 @@ function Summary({ trailer, data }) {
   return (
     <div className="rounded-2xl bg-brand-dark text-white p-5 sm:p-6 md:p-8 shadow-xl">
       <div className="flex items-center gap-3">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-brand-yellow text-brand-dark font-black">
-          DT
-        </div>
+        <FaguBadge size="md" variant="yellow" />
         <div className="min-w-0">
           <p className="text-[11px] sm:text-xs uppercase tracking-wider text-white/60">
             Booking Summary
           </p>
-          <p className="font-display text-lg sm:text-xl font-extrabold uppercase truncate">
+          <p className="font-display text-lg sm:text-xl font-extrabold truncate">
             {trailer.name}
           </p>
         </div>
@@ -469,7 +477,7 @@ function Summary({ trailer, data }) {
 
       <div className="mt-5 sm:mt-6 rounded-lg border border-brand-yellow/40 bg-brand-yellow/10 p-3 sm:p-4 text-sm text-brand-yellow">
         <p className="font-semibold">Heads up:</p>
-        <p className="text-yellow-100/80 mt-1 text-xs sm:text-sm">
+        <p className="text-white/80 mt-1 text-xs sm:text-sm">
           Disposal and dump fees are not included. The rental price covers
           trailer delivery and pickup only.
         </p>

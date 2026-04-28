@@ -1,53 +1,50 @@
+import { Link } from "react-router-dom";
 import heroTrailerPhoto from "../assets/dumptrailler header.jpg";
+import FaguBadge from "./FaguBadge";
 
-// Hero / above-the-fold section. Strong promise + dual CTAs.
+/* -------------------------------------------------------------------------- */
+/* Hero — FAGU brand introduction                                             */
+/* -------------------------------------------------------------------------- */
+/* The home page is now a presentation of FAGU as a multi-service trailer     */
+/* platform. The hero introduces the brand and points users to the two main  */
+/* flows: explore services or partner with FAGU. All deeper content lives in */
+/* dedicated routes.                                                          */
+/* -------------------------------------------------------------------------- */
+
 export default function Hero() {
   return (
     <section
       id="home"
-      className="relative isolate overflow-hidden bg-grid-dark text-white pt-32 sm:pt-36 md:pt-44 pb-16 sm:pb-20 md:pb-28"
+      className="relative isolate overflow-hidden bg-grid-dark text-white pt-40 sm:pt-44 md:pt-52 pb-16 sm:pb-20 md:pb-28"
     >
-      {/* Decorative spotlight */}
       <div
         aria-hidden
         className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[400px] w-[400px] sm:h-[600px] sm:w-[600px] rounded-full bg-brand-yellow/10 blur-3xl"
       />
-      {/* Hazard stripe accent */}
       <div className="absolute top-0 inset-x-0 h-2 bg-hazard-stripes opacity-90" />
 
       <div className="container-page relative grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-        <div className="lg:col-span-7 order-2 lg:order-1">
+        <div className="lg:col-span-7">
           <span className="section-eyebrow">
-            Construction · Cleanouts · Renovation
+            FAGU · Home Services & Logistics
           </span>
-          <h1 className="text-[2.4rem] xs:text-[2.8rem] sm:text-6xl md:text-7xl lg:text-[5.2rem] xl:text-[6rem] font-extrabold leading-[0.94] uppercase max-w-4xl">
-            Rent a Dump Trailer
+          <h1 className="text-[2.4rem] xs:text-[2.8rem] sm:text-6xl md:text-7xl lg:text-[5rem] xl:text-[5.6rem] font-extrabold leading-[0.96] uppercase max-w-4xl">
+            One platform.
             <br className="hidden sm:inline" />{" "}
-            <span className="text-brand-yellow">Fast, Simple & Secure</span>
+            <span className="text-brand-yellow">Every trailer you need.</span>
           </h1>
           <p className="mt-5 sm:mt-6 max-w-2xl text-lg md:text-xl text-white/85 leading-relaxed">
-            Choose the right trailer, pick your service date, and lock in your
-            reservation with prepayment. We deliver on time so your job stays
-            on schedule.
+            FAGU connects roofing crews, contractors and homeowners with the
+            right trailer for every job — starting with our dump trailer fleet
+            (12–18 ft). Owners list, customers book, drivers deliver.
           </p>
 
-          {/* Discount highlight near the primary CTA */}
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-brand-yellow/40 bg-brand-yellow/10 px-3 py-1.5 text-xs sm:text-sm text-brand-yellow">
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-brand-yellow text-brand-dark font-extrabold text-[10px]">
-              %
-            </span>
-            <span>
-              <strong className="font-bold">Save 50%</strong> on your second
-              trailer for the same job site.
-            </span>
-          </div>
-
-          <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row gap-3">
+          <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row gap-3">
             <a
-              href="#booking"
+              href="#services"
               className="btn-primary w-full sm:w-auto !text-sm md:!text-base !px-7"
             >
-              Check Availability — Book Today
+              Explore Our Services
               <svg
                 width="18"
                 height="18"
@@ -62,29 +59,26 @@ export default function Hero() {
                 <polyline points="12 5 19 12 12 19" />
               </svg>
             </a>
-            <a
-              href="#trailers"
+            <Link
+              to="/partner"
               className="btn-outline-light w-full sm:w-auto !text-sm md:!text-base !px-7"
             >
-              View Trailers
-            </a>
+              Partner with FAGU
+            </Link>
           </div>
 
-          {/* Trust strip */}
           <div className="mt-8 sm:mt-10 grid grid-cols-3 gap-2 sm:gap-4 max-w-lg">
-            <Trust label="Online" value="Booking" />
-            <Trust label="Flexible" value="Delivery" />
-            <Trust label="Transparent" value="Pricing" />
+            <Trust label="For" value="Owners" />
+            <Trust label="For" value="Customers" />
+            <Trust label="For" value="Drivers" />
           </div>
         </div>
 
-        {/* Visual card */}
-        <div className="lg:col-span-5 order-1 lg:order-2">
+        <div className="lg:col-span-5">
           <HeroVisual />
         </div>
       </div>
 
-      {/* Bottom hazard stripe */}
       <div className="absolute bottom-0 inset-x-0 h-2 bg-hazard-stripes opacity-90" />
     </section>
   );
@@ -103,32 +97,39 @@ function Trust({ label, value }) {
   );
 }
 
-// Hero visual card with real trailer image
 function HeroVisual() {
   return (
     <div className="relative max-w-md mx-auto lg:max-w-none">
       <div className="absolute -inset-4 rounded-3xl bg-brand-yellow/20 blur-2xl" />
+
       <div className="relative rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-brand-gray to-brand-dark p-4 sm:p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2 flex-wrap">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-yellow text-brand-dark text-[10px] sm:text-xs font-bold uppercase px-2.5 sm:px-3 py-1 tracking-wider">
             <span className="h-2 w-2 rounded-full bg-brand-dark animate-pulse" />
-            Available Now
+            Live · Dump Trailers
           </span>
-          <span className="text-white/60 text-[10px] sm:text-xs">
-            Starting at
-          </span>
+          <Link
+            to="/services/dump-trailer"
+            className="text-white/70 hover:text-brand-yellow text-[10px] sm:text-xs font-semibold"
+          >
+            See details →
+          </Link>
         </div>
-        <p className="font-display text-4xl sm:text-5xl font-extrabold text-white">
-          $350<span className="text-brand-yellow">.</span>
-          <span className="text-sm sm:text-base font-medium text-white/60 ml-2 block sm:inline">
-            / first trailer
-          </span>
+        <p className="font-display text-3xl sm:text-4xl font-extrabold text-white leading-tight">
+          Roofing tear-offs,{" "}
+          <span className="text-brand-yellow">delivered.</span>
         </p>
 
         <div className="relative mt-4 sm:mt-6 overflow-hidden rounded-xl border border-white/10">
+          {/* Brand seal stays over the photo, never over text */}
+          <FaguBadge
+            size="md"
+            variant="dark"
+            className="absolute top-3 left-3 z-20"
+          />
           <img
             src={heroTrailerPhoto}
-            alt="Large dump trailer ready at a job site"
+            alt="FAGU dump trailer ready at a job site"
             loading="eager"
             decoding="async"
             className="h-56 sm:h-64 md:h-72 w-full object-cover"
@@ -140,11 +141,16 @@ function HeroVisual() {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 text-sm">
-          <Spec label="Sizes" value="14 ft / 16 ft" />
-          <Spec label="Hitch" value="2-5/16 in" />
-          <Spec label="Electrical" value="7-pin plug" />
-          <Spec label="Width" value="7 ft" />
+          <Spec label="Sizes" value="12 – 18 ft" />
+          <Spec label="Coverage" value="Day-before delivery" />
         </div>
+
+        <Link
+          to="/services/dump-trailer#booking"
+          className="btn-primary mt-4 w-full !text-sm"
+        >
+          Book a Dump Trailer
+        </Link>
       </div>
     </div>
   );

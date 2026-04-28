@@ -18,14 +18,14 @@ export default function Trailers() {
       <div className="container-page">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 sm:gap-6">
           <div className="max-w-2xl">
-            <span className="section-eyebrow">Our Fleet</span>
+            <span className="section-eyebrow">Our Fleet · 12 – 18 ft</span>
             <h2 className="section-title text-brand-dark">
               Choose the trailer{" "}
               <span className="text-brand-orange">that fits your job.</span>
             </h2>
             <p className="mt-3 sm:mt-4 text-gray-600 text-base sm:text-lg">
-              Two reliable sizes — both built for the toughest construction,
-              renovation, and cleanout work.
+              Four reliable sizes built for the toughest construction,
+              renovation, roofing tear-offs and cleanout work.
             </p>
           </div>
           <a
