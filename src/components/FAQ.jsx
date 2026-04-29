@@ -1,4 +1,6 @@
 import { useState } from "react";
+import logoBiografia from "../assets/LOGObiografia.png";
+import { API_CONFIG } from "../config/api";
 
 const QUESTIONS = [
   {
@@ -25,6 +27,62 @@ const QUESTIONS = [
     q: "What if I need to cancel or reschedule?",
     a: "Please reach out as early as possible. We do our best to accommodate changes — cancellation terms are included in your booking confirmation email.",
   },
+  {
+    q: "How long can I keep the trailer?",
+    a: "Standard rentals are priced per service window shown at booking. If you need extra time, contact us before pickup and we can extend your rental based on availability.",
+  },
+  {
+    q: "Do I need to be on-site for delivery and pickup?",
+    a: "It is recommended, but not always required. If you cannot be present, send clear placement instructions (driveway spot, gate code, landmarks) so our team can complete delivery safely.",
+  },
+  {
+    q: "Can the trailer be placed on the street?",
+    a: "In many cities, street placement may require a permit. We recommend checking local rules before booking. You are responsible for required permits or HOA approvals.",
+  },
+  {
+    q: "Is there a weight limit?",
+    a: "Yes. Each trailer size has a maximum payload and legal transport limit. Overloading is not allowed for safety and compliance reasons, and extra charges may apply if limits are exceeded.",
+  },
+  {
+    q: "How high can I load the trailer?",
+    a: "Please keep debris level with the top rail unless your booking specifically includes high-side configuration. Material stacked above safe transport height may need to be reloaded before pickup.",
+  },
+  {
+    q: "Can I mix different materials in one load?",
+    a: "You can mix many common debris types, but some materials must be separated due to landfill and recycling rules. If your project includes special waste, tell us in advance so we can guide you.",
+  },
+  {
+    q: "Are mattresses, appliances, tires, or concrete allowed?",
+    a: "These items may be accepted with special handling or additional disposal fees depending on local facilities. Let us know before delivery so we can confirm pricing and acceptance.",
+  },
+  {
+    q: "What happens if the trailer blocks access or sinks on soft ground?",
+    a: "Use a firm, level surface and keep clear access for pickup. If relocation or recovery is required due to site conditions, additional service charges may apply.",
+  },
+  {
+    q: "How quickly can I get a trailer?",
+    a: "Availability varies by day and route density. We often support next-day service, and in some areas same-day may be possible. The earlier you book, the better your delivery window options.",
+  },
+  {
+    q: "What payment methods do you accept?",
+    a: "We accept prepaid online or approved invoicing workflows for eligible recurring accounts. Payment must be completed before a reservation is confirmed.",
+  },
+  {
+    q: "Do you offer recurring service for contractors?",
+    a: "Yes. We support recurring and multi-trailer workflows for roofing and construction teams. Contact us to set up a repeat schedule and account-level pricing options.",
+  },
+  {
+    q: "What phone number should I use to contact FAGU?",
+    a: `You can call us directly at ${API_CONFIG.contact.phone}.`,
+  },
+  {
+    q: "What is the best email to reach FAGU?",
+    a: `Send your questions to ${API_CONFIG.contact.email} and our team will respond as soon as possible.`,
+  },
+  {
+    q: "What are FAGU's support hours?",
+    a: `Our current support hours are ${API_CONFIG.contact.hours}.`,
+  },
 ];
 
 export default function FAQ() {
@@ -43,12 +101,15 @@ export default function FAQ() {
             Can't find what you're looking for? Reach out and we'll help you
             choose the right trailer for your project.
           </p>
-          <a
-            href="#booking"
-            className="btn-secondary mt-5 sm:mt-6 w-full sm:w-auto"
-          >
-            Get a Quote
-          </a>
+          <div className="mt-8 sm:mt-10">
+            <img
+              src={logoBiografia}
+              alt="FAGU logo"
+              loading="lazy"
+              decoding="async"
+              className="w-full max-w-md lg:max-w-lg xl:max-w-xl h-auto object-contain"
+            />
+          </div>
         </div>
 
         <div className="divide-y divide-gray-200 border-y border-gray-200">

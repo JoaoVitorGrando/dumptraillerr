@@ -1,4 +1,4 @@
-import dumpTrailer from "../assets/DumpTrailer.webp";
+import dumpTrailer from "../assets/banner.png";
 import enclosedTrailer from "../assets/EnclosedTrailer.webp";
 import flatbedTrailer from "../assets/FlatbedTrailer.webp";
 import utilityTrailer from "../assets/utility-trailer.webp";
@@ -30,8 +30,8 @@ export const SERVICES = [
     available: true,
     tagline: "Roofing tear-offs, construction debris and full cleanouts.",
     short:
-      "12 to 18 ft hydraulic dump trailers — the most-used range for roofing crews and contractors. Online booking, day-before delivery and pickup included.",
-    sizes: ["12 ft", "14 ft", "16 ft", "18 ft"],
+      "12 to 20 ft hydraulic dump trailers, the most-used range for roofing crews and contractors. Online booking, day-before delivery and pickup included.",
+    sizes: ["12 ft", "14 ft", "16 ft", "18 ft", "20 ft"],
     startingPrice: 350,
     bestFor: [
       "Roofing tear-offs",
@@ -41,7 +41,7 @@ export const SERVICES = [
     ],
     specs: [
       { label: "Width", value: "7 ft" },
-      { label: "Length", value: "12 – 18 ft" },
+      { label: "Length", value: "12 – 20 ft" },
       { label: "Height", value: "4 ft sides" },
       { label: "Hitch", value: "2-5/16 in ball" },
       { label: "Electrical", value: "7-pin plug" },
@@ -398,5 +398,17 @@ export const SERVICES = [
   },
 ];
 
+// Launch gate:
+// - true  => show only dump-trailer in public UI/routes
+// - false => show all service categories
+export const SHOW_ONLY_DUMP_TRAILERS = true;
+
+export const PUBLIC_SERVICES = SHOW_ONLY_DUMP_TRAILERS
+  ? SERVICES.filter((s) => s.slug === "dump-trailer")
+  : SERVICES;
+
 export const findService = (slug) =>
   SERVICES.find((s) => s.slug === slug) ?? null;
+
+export const findPublicService = (slug) =>
+  PUBLIC_SERVICES.find((s) => s.slug === slug) ?? null;

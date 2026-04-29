@@ -59,100 +59,25 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-light">
+    <div className="min-h-screen flex flex-col bg-grid-dark text-white">
       <Header />
 
       <main className="flex-1 pt-32 sm:pt-36 md:pt-40 pb-16 sm:pb-20 md:pb-28">
         <div className="container-page">
-          <nav aria-label="Breadcrumb" className="text-xs text-gray-500">
-            <Link to="/" className="hover:text-brand-orange">
-              Home
-            </Link>
-            <span className="mx-2">/</span>
-            <span className="text-brand-dark">Contact</span>
-          </nav>
+          <div className="max-w-3xl mx-auto text-center">
+            <span className="section-eyebrow inline-block">Talk to FAGU</span>
+            <h1 className="section-title text-white">
+              Questions, partnerships{" "}
+              <span className="text-brand-orange">or anything else.</span>
+            </h1>
+            <p className="mt-3 sm:mt-4 text-white/75 text-base sm:text-lg">
+              Pick a channel below, or send us a message and we'll get back to
+              you within 1 business day.
+            </p>
+          </div>
 
-          <div className="mt-6 grid lg:grid-cols-[1fr,1.2fr] gap-8 lg:gap-12 items-start">
-            <div>
-              <span className="section-eyebrow">Talk to FAGU</span>
-              <h1 className="section-title text-brand-dark">
-                Questions, partnerships{" "}
-                <span className="text-brand-orange">or anything else.</span>
-              </h1>
-              <p className="mt-3 sm:mt-4 text-gray-600 text-base sm:text-lg">
-                Pick a channel below — or send us a message and we'll get back
-                to you within 1 business day.
-              </p>
-
-              <ul className="mt-6 space-y-3 text-sm sm:text-base">
-                <li className="flex items-start gap-3">
-                  <Pill>Phone</Pill>
-                  <a
-                    href={`tel:${API_CONFIG.contact.phone.replace(/\s+/g, "")}`}
-                    className="font-semibold text-brand-dark hover:text-brand-orange"
-                  >
-                    {API_CONFIG.contact.phone}
-                  </a>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Pill>Email</Pill>
-                  <a
-                    href={`mailto:${API_CONFIG.contact.email}`}
-                    className="font-semibold text-brand-dark hover:text-brand-orange break-all"
-                  >
-                    {API_CONFIG.contact.email}
-                  </a>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Pill>Hours</Pill>
-                  <span className="text-gray-700">
-                    {API_CONFIG.contact.hours}
-                  </span>
-                </li>
-              </ul>
-
-              <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-                <p className="font-display text-lg font-extrabold text-brand-dark">
-                  Looking for a specific flow?
-                </p>
-                <ul className="mt-3 space-y-2 text-sm">
-                  <li>
-                    <Link
-                      to="/services/dump-trailer#booking"
-                      className="text-brand-yellow hover:text-brand-orange font-semibold"
-                    >
-                      → Reserve a dump trailer
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/partner/owner"
-                      className="text-brand-yellow hover:text-brand-orange font-semibold"
-                    >
-                      → I have trailers (owner signup)
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/partner/customer"
-                      className="text-brand-yellow hover:text-brand-orange font-semibold"
-                    >
-                      → I need trailers (customer account)
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/partner/driver"
-                      className="text-brand-yellow hover:text-brand-orange font-semibold"
-                    >
-                      → I want to drive (driver application)
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-5 sm:p-6 md:p-8">
+          <div className="mt-8 grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)] gap-8 lg:gap-8 items-start">
+            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-5 sm:p-6 md:p-8 w-full">
               {submitted ? (
                 <div className="text-center py-6">
                   <div className="mx-auto grid h-14 w-14 sm:h-16 sm:w-16 place-items-center rounded-full bg-green-100 text-green-700">
@@ -283,6 +208,75 @@ export default function ContactPage() {
                   </div>
                 </form>
               )}
+            </div>
+
+            <div className="w-full">
+              <ul className="space-y-3 text-sm sm:text-base">
+                <li className="flex items-start gap-3">
+                  <Pill>Phone</Pill>
+                  <a
+                    href={`tel:${API_CONFIG.contact.phone.replace(/\s+/g, "")}`}
+                    className="font-semibold text-white hover:text-brand-yellow"
+                  >
+                    {API_CONFIG.contact.phone}
+                  </a>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Pill>Email</Pill>
+                  <a
+                    href={`mailto:${API_CONFIG.contact.email}`}
+                    className="font-semibold text-white hover:text-brand-yellow break-all"
+                  >
+                    {API_CONFIG.contact.email}
+                  </a>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Pill>Hours</Pill>
+                  <span className="text-white/80">
+                    {API_CONFIG.contact.hours}
+                  </span>
+                </li>
+              </ul>
+
+              <div className="mt-8 rounded-2xl border border-white/15 bg-white/[0.04] p-5 sm:p-6">
+                <p className="font-display text-lg font-extrabold text-white">
+                  Looking for a specific flow?
+                </p>
+                <ul className="mt-3 space-y-2 text-sm">
+                  <li>
+                    <Link
+                      to="/services/dump-trailer#booking"
+                      className="text-brand-yellow hover:text-brand-orange font-semibold"
+                    >
+                      → Reserve a dump trailer
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/partner/owner"
+                      className="text-brand-yellow hover:text-brand-orange font-semibold"
+                    >
+                      → I have trailers (owner signup)
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/partner/customer"
+                      className="text-brand-yellow hover:text-brand-orange font-semibold"
+                    >
+                      → I need trailers (customer account)
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/partner/driver"
+                      className="text-brand-yellow hover:text-brand-orange font-semibold"
+                    >
+                      → I want to drive (driver application)
+                    </Link>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>

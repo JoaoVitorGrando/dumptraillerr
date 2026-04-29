@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import FaguBadge from "./FaguBadge";
-import { SERVICES } from "../data/services";
+import { PUBLIC_SERVICES } from "../data/services";
+
+const isSingleService = PUBLIC_SERVICES.length === 1;
 
 /* -------------------------------------------------------------------------- */
 /* Header — FAGU Home Services                                                */
@@ -20,7 +22,6 @@ const NAV_LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/partner", label: "Partner" },
   { to: "/faq", label: "FAQ" },
-  { to: "/contact", label: "Contact" },
 ];
 
 const RESERVE_HREF = "/services/dump-trailer#booking";
@@ -84,11 +85,7 @@ export default function Header() {
       </div>
 
       {/* Main nav bar */}
-      <div
-        className={`bg-brand-dark/80 backdrop-blur-md transition-shadow duration-300 ${
-          scrolled ? "shadow-lg bg-brand-dark/88" : ""
-        }`}
-      >
+      <div className={`bg-brand-dark/75 backdrop-blur-md transition-shadow duration-300 ${scrolled ? "shadow-lg bg-brand-dark/80" : ""}`}>
         <div className="container-page flex h-24 md:h-28 items-center justify-between gap-3">
           <Link
             to="/"
@@ -100,6 +97,7 @@ export default function Header() {
               bare
               className="!h-20 !w-20 sm:!h-28 sm:!w-28 md:!h-32 md:!w-32"
             />
+            
           </Link>
 
           {/* Desktop nav */}
@@ -111,66 +109,73 @@ export default function Header() {
               Home
             </Link>
 
-            {/* Services dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setServicesOpen(true)}
-              onMouseLeave={() => setServicesOpen(false)}
-            >
-              <button
-                type="button"
-                onClick={() => setServicesOpen((v) => !v)}
-                aria-haspopup="menu"
-                aria-expanded={servicesOpen}
-                className="text-white/90 hover:text-brand-yellow font-medium transition-colors inline-flex items-center gap-1"
+            {/* Services — direct link when single service, dropdown when multiple */}
+            {isSingleService ? (
+              <Link
+                to={`/services/${PUBLIC_SERVICES[0].slug}`}
+                className="text-white/90 hover:text-brand-yellow font-medium transition-colors"
               >
-                Services
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className={`transition-transform ${
-                    servicesOpen ? "rotate-180" : ""
-                  }`}
+                Dump Trailers
+              </Link>
+            ) : (
+              <div
+                className="relative"
+                onMouseEnter={() => setServicesOpen(true)}
+                onMouseLeave={() => setServicesOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => setServicesOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={servicesOpen}
+                  className="text-white/90 hover:text-brand-yellow font-medium transition-colors inline-flex items-center gap-1"
                 >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
+                  Services
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`transition-transform ${
+                      servicesOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
 
-              {servicesOpen && (
-                <div
-                  role="menu"
-                  className="absolute top-full left-0 pt-3 min-w-[260px]"
-                >
-                  <div className="rounded-xl border border-white/10 bg-brand-dark/95 backdrop-blur shadow-2xl overflow-hidden">
-                    {SERVICES.map((s) => (
-                      <Link
-                        key={s.slug}
-                        to={`/services/${s.slug}`}
-                        role="menuitem"
-                        className="flex items-center justify-between gap-3 px-4 py-3 text-sm text-white/90 hover:bg-white/5 hover:text-brand-yellow border-b border-white/5 last:border-b-0"
-                      >
-                        <span className="font-semibold">{s.name}</span>
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-wider ${
-                            s.available
-                              ? "text-brand-yellow"
-                              : "text-white/40"
-                          }`}
+                {servicesOpen && (
+                  <div
+                    role="menu"
+                    className="absolute top-full left-0 pt-3 min-w-[260px]"
+                  >
+                    <div className="rounded-xl border border-white/10 bg-brand-dark/95 backdrop-blur shadow-2xl overflow-hidden">
+                      {PUBLIC_SERVICES.map((s) => (
+                        <Link
+                          key={s.slug}
+                          to={`/services/${s.slug}`}
+                          role="menuitem"
+                          className="flex items-center justify-between gap-3 px-4 py-3 text-sm text-white/90 hover:bg-white/5 hover:text-brand-yellow border-b border-white/5 last:border-b-0"
                         >
-                          {s.available ? "Live" : "Soon"}
-                        </span>
-                      </Link>
-                    ))}
+                          <span className="font-semibold">{s.name}</span>
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider ${
+                              s.available ? "text-brand-yellow" : "text-white/40"
+                            }`}
+                          >
+                            {s.available ? "Live" : "Soon"}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {NAV_LINKS.filter((l) => l.to !== "/").map((l) => (
               <Link
@@ -239,30 +244,39 @@ export default function Header() {
             Home
           </Link>
 
-          <div className="py-3 border-b border-white/5">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-white/45 font-semibold mb-2">
-              Services
-            </p>
-            <ul className="grid grid-cols-1 gap-1">
-              {SERVICES.map((s) => (
-                <li key={s.slug}>
-                  <Link
-                    to={`/services/${s.slug}`}
-                    className="flex items-center justify-between rounded-md px-2 py-2 text-white/85 hover:bg-white/5 hover:text-brand-yellow"
-                  >
-                    <span>{s.name}</span>
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider ${
-                        s.available ? "text-brand-yellow" : "text-white/40"
-                      }`}
+          {isSingleService ? (
+            <Link
+              to={`/services/${PUBLIC_SERVICES[0].slug}`}
+              className="py-3 text-white/90 border-b border-white/5 hover:text-brand-yellow text-base font-semibold"
+            >
+              Dump Trailers
+            </Link>
+          ) : (
+            <div className="py-3 border-b border-white/5">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-white/45 font-semibold mb-2">
+                Services
+              </p>
+              <ul className="grid grid-cols-1 gap-1">
+                {PUBLIC_SERVICES.map((s) => (
+                  <li key={s.slug}>
+                    <Link
+                      to={`/services/${s.slug}`}
+                      className="flex items-center justify-between rounded-md px-2 py-2 text-white/85 hover:bg-white/5 hover:text-brand-yellow"
                     >
-                      {s.available ? "Live" : "Soon"}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+                      <span>{s.name}</span>
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider ${
+                          s.available ? "text-brand-yellow" : "text-white/40"
+                        }`}
+                      >
+                        {s.available ? "Live" : "Soon"}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {NAV_LINKS.filter((l) => l.to !== "/").map((l) => (
             <Link

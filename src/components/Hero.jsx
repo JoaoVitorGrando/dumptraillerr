@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import FaguBadge from "./FaguBadge";
 import { SERVICES } from "../data/services";
+import { TRAILERS } from "../data/trailers";
 
 /* -------------------------------------------------------------------------- */
 /* Hero — FAGU brand introduction                                             */
@@ -18,27 +19,20 @@ export default function Hero() {
       id="home"
       className="relative isolate overflow-hidden bg-grid-dark text-white pt-40 sm:pt-44 md:pt-52 pb-16 sm:pb-20 md:pb-28"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[400px] w-[400px] sm:h-[600px] sm:w-[600px] rounded-full bg-brand-yellow/10 blur-3xl"
-      />
       <div className="absolute top-0 inset-x-0 h-2 bg-hazard-stripes opacity-90" />
 
-      <div className="container-page relative grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-        <div className="lg:col-span-7">
-          <span className="section-eyebrow">
-            FAGU · Home Services & Logistics
-          </span>
-          <h1 className="text-[2.4rem] xs:text-[2.8rem] sm:text-6xl md:text-7xl lg:text-[5rem] xl:text-[5.6rem] font-extrabold leading-[0.96] uppercase max-w-4xl">
+      <div className="container-page relative grid lg:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)] gap-8 lg:gap-2 items-center">
+        <div className="min-w-0 lg:pr-3">
+          <h1 className="text-[2.4rem] xs:text-[2.8rem] sm:text-6xl md:text-7xl lg:text-[5rem] xl:text-[5.4rem] font-extrabold leading-[0.96] uppercase max-w-none">
             One platform.
             <br className="hidden sm:inline" />{" "}
             <span className="text-brand-yellow">Every trailer you need.</span>
           </h1>
-          <p className="mt-5 sm:mt-6 max-w-2xl text-lg md:text-xl text-white/85 leading-relaxed">
+          <p className="mt-5 sm:mt-6 max-w-3xl text-lg md:text-xl text-white/85 leading-relaxed">
             We connect you to the right trailer for any job fast, simple, and
             reliable.
           </p>
-          <p className="mt-3 max-w-2xl text-base sm:text-lg text-brand-yellow font-semibold">
+          <p className="mt-3 max-w-3xl text-base sm:text-lg text-brand-yellow font-semibold">
             Book now and get your job done without hassle.
           </p>
 
@@ -70,14 +64,14 @@ export default function Hero() {
             </Link>
           </div>
 
-          <div className="mt-8 sm:mt-10 grid grid-cols-3 gap-2 sm:gap-4 max-w-lg">
+          <div className="mt-8 sm:mt-10 grid grid-cols-3 gap-2 sm:gap-4 max-w-2xl">
             <Trust label="For Owners" value="Monetize your trailers with ease" />
             <Trust label="For Customers" value="Book fast and get it delivered" />
             <Trust label="For Drivers" value="Earn by making local deliveries" />
           </div>
         </div>
 
-        <div className="lg:col-span-5">
+        <div className="min-w-0">
           <HeroVisual />
         </div>
       </div>
@@ -101,15 +95,20 @@ function Trust({ label, value }) {
 }
 
 function HeroVisual() {
-  const carouselItems = useMemo(
-    () =>
-      SERVICES.map((service) => ({
-        slug: service.slug,
-        name: service.name,
-        image: service.image,
-      })),
-    []
-  );
+  const carouselItems = useMemo(() => {
+    if (TRAILERS.length) {
+      return TRAILERS.map((trailer) => ({
+        slug: "dump-trailer",
+        name: trailer.size,
+        image: trailer.image,
+      }));
+    }
+    return SERVICES.map((service) => ({
+      slug: service.slug,
+      name: service.name,
+      image: service.image,
+    }));
+  }, []);
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -123,34 +122,27 @@ function HeroVisual() {
   const activeItem = carouselItems[activeIndex];
 
   return (
-    <div className="relative max-w-lg mx-auto lg:max-w-none lg:-ml-8 lg:mt-6">
-      <div className="absolute -inset-4 rounded-3xl bg-brand-yellow/20 blur-2xl" />
-
-      <div className="relative rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-brand-gray to-brand-dark p-5 sm:p-7 shadow-2xl">
-        <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-2 rounded-full bg-brand-yellow text-brand-dark text-[10px] sm:text-xs font-bold uppercase px-2.5 sm:px-3 py-1 tracking-wider">
-            <span className="h-2 w-2 rounded-full bg-brand-dark animate-pulse" />
-            FAGU · Trailer Fleet
-          </span>
-          <Link
-            to={activeItem ? `/services/${activeItem.slug}` : "/#services"}
-            className="text-white/70 hover:text-brand-yellow text-[10px] sm:text-xs font-semibold"
-          >
-            See details →
-          </Link>
-        </div>
-        <p className="font-display text-3xl sm:text-4xl font-extrabold text-white leading-tight">
-          Explore our trailer{" "}
-          <span className="text-brand-yellow">options.</span>
-        </p>
-
-        <div className="relative mt-4 sm:mt-6 overflow-hidden rounded-xl border border-white/10">
-          {/* Brand seal stays over the photo, never over text */}
+    <div className="relative w-full max-w-xl mx-auto lg:max-w-none lg:mt-2 lg:-ml-2">
+      <div className="absolute -inset-3 rounded-3xl bg-brand-yellow/10 blur-xl pointer-events-none" />
+      <div className="relative rounded-2xl sm:rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-4 sm:p-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-3 mb-3 sm:mb-4">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-brand-yellow font-bold">
+              FAGU · Trailer Fleet
+            </p>
+            <p className="mt-1 text-white font-display text-xl sm:text-2xl font-extrabold leading-tight">
+              Explore our trailer{" "}
+              <span className="text-brand-yellow">options.</span>
+            </p>
+          </div>
           <FaguBadge
-            size="md"
-            variant="dark"
-            className="absolute top-3 left-3 z-20"
+            size="sm"
+            bare
+            className="shrink-0 opacity-90"
           />
+        </div>
+
+        <div className="relative overflow-hidden rounded-xl border border-white/10">
           {activeItem && (
             <>
               <img
@@ -158,16 +150,20 @@ function HeroVisual() {
                 alt={activeItem.name}
                 loading="eager"
                 decoding="async"
-                className="h-60 sm:h-72 md:h-80 w-full object-cover transition-all duration-700"
+                className="h-72 sm:h-80 md:h-96 lg:h-[26rem] w-full object-cover transition-all duration-700"
+              />
+              <div
+                aria-hidden
+                className="absolute inset-0 bg-gradient-to-t from-brand-dark/80 via-brand-dark/15 to-transparent"
               />
               <div className="absolute left-3 right-3 bottom-3 flex items-center justify-between gap-3 z-20">
-                <span className="rounded-full bg-black/55 border border-white/20 px-3 py-1 text-[10px] sm:text-xs uppercase tracking-wider font-semibold text-white">
+                <span className="rounded-full bg-white/95 text-brand-dark text-[10px] sm:text-xs font-bold tabular-nums px-3 py-1">
                   {activeItem.name}
                 </span>
                 <div className="flex items-center gap-1.5">
                   {carouselItems.map((item, i) => (
                     <span
-                      key={item.slug}
+                      key={`${item.slug}-${i}`}
                       className={`h-1.5 rounded-full transition-all ${
                         i === activeIndex
                           ? "w-5 bg-brand-yellow"
@@ -180,15 +176,25 @@ function HeroVisual() {
               </div>
             </>
           )}
-          <div
-            className="absolute inset-0 bg-gradient-to-t from-brand-dark/70 via-brand-dark/20 to-transparent"
-            aria-hidden
-          />
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 text-sm">
-          <Spec label="Sizes" value="12 – 18 ft" />
-          <Spec label="Coverage" value="Day-before delivery" />
+        <div className="mt-3 sm:mt-4 flex items-center justify-between gap-3 px-1">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-white/50">
+              Sizes
+            </p>
+            <p className="font-semibold text-white text-sm sm:text-base tabular-nums">
+              12 – 20 ft
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] uppercase tracking-wider text-white/50">
+              Delivery
+            </p>
+            <p className="font-semibold text-white text-sm sm:text-base">
+              Day-before
+            </p>
+          </div>
         </div>
 
         <Link
@@ -202,13 +208,3 @@ function HeroVisual() {
   );
 }
 
-function Spec({ label, value }) {
-  return (
-    <div className="rounded-lg bg-white/5 border border-white/10 px-2.5 sm:px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wider text-white/50">
-        {label}
-      </p>
-      <p className="font-semibold text-white text-sm sm:text-base">{value}</p>
-    </div>
-  );
-}

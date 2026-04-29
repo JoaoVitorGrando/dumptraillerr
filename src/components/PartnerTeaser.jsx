@@ -45,8 +45,8 @@ export default function PartnerTeaser() {
       className="py-16 sm:py-20 md:py-28 bg-grid-dark text-white"
     >
       <div className="container-page">
-        <div className="max-w-3xl">
-          <span className="section-eyebrow">Join the FAGU Network</span>
+        <div className="max-w-3xl mx-auto text-center">
+          <span className="section-eyebrow inline-block">Join the FAGU Network</span>
           <h2 className="section-title">
             One platform.{" "}
             <span className="text-brand-yellow">Three ways to grow.</span>

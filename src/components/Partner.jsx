@@ -81,8 +81,8 @@ export default function Partner({ initialTab = "owner" }) {
       className="pt-32 sm:pt-36 md:pt-40 pb-16 sm:pb-20 md:pb-28 bg-grid-dark text-white"
     >
       <div className="container-page">
-        <div className="max-w-3xl">
-          <span className="section-eyebrow">Partner With FAGU</span>
+        <div className="max-w-4xl mx-auto text-center">
+          <span className="section-eyebrow inline-block">Partner With FAGU</span>
           <h2 className="section-title">
             One platform.{" "}
             <span className="text-brand-yellow">Three ways to grow.</span>

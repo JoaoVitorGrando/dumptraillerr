@@ -18,7 +18,11 @@ const INITIAL = {
   address: "",
   city: "",
   zip: "",
-  trailerType: "7x14x4",
+  trailerType: "standard-14x7",
+  customTrailerModel: "",
+  customTrailerSize: "",
+  customTrailerHeight: "",
+  customTrailerCapacity: "",
   serviceDate: "",
   deliveryWindow: "afternoon",
   loads: "1",
@@ -40,6 +44,8 @@ const REQUIRED_FIELDS = [
   "loads",
   "materialType",
 ];
+
+const CUSTOM_TRAILER_ID = "custom-dump-trailer";
 
 const MATERIALS = [
   { value: "construction-debris", label: "Construction Debris" },
@@ -73,6 +79,8 @@ export default function BookingForm() {
     [data.trailerType]
   );
 
+  const usingCustomTrailer = data.trailerType === CUSTOM_TRAILER_ID;
+
   const update = (field) => (e) => {
     const value = e?.target?.value ?? "";
     setData((d) => ({ ...d, [field]: value }));
@@ -92,6 +100,20 @@ export default function BookingForm() {
     });
     if (values.loads === "custom" && !String(values.customLoads).trim()) {
       errs.customLoads = "Tell us how many loads you need";
+    }
+    if (values.trailerType === CUSTOM_TRAILER_ID) {
+      if (!String(values.customTrailerModel).trim()) {
+        errs.customTrailerModel = "Tell us the model name";
+      }
+      if (!String(values.customTrailerSize).trim()) {
+        errs.customTrailerSize = "Tell us width x length";
+      }
+      if (!String(values.customTrailerHeight).trim()) {
+        errs.customTrailerHeight = "Tell us side height";
+      }
+      if (!String(values.customTrailerCapacity).trim()) {
+        errs.customTrailerCapacity = "Tell us estimated capacity";
+      }
     }
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
       errs.email = "Please enter a valid email address";
@@ -118,7 +140,9 @@ export default function BookingForm() {
     setSubmitting(true);
     await submitLead("booking", {
       ...data,
-      trailerName: selectedTrailer?.name,
+      trailerName: usingCustomTrailer
+        ? data.customTrailerModel
+        : selectedTrailer?.name,
       trailerPrice: selectedTrailer?.price,
     });
     setSubmitting(false);
@@ -133,10 +157,10 @@ export default function BookingForm() {
   };
 
   return (
-    <section id="booking" className="py-16 sm:py-20 md:py-28 bg-brand-light">
+    <section id="booking" className="pt-8 sm:pt-10 md:pt-12 pb-16 sm:pb-20 md:pb-28 bg-brand-light">
       <div className="container-page">
-        <div className="max-w-3xl">
-          <span className="section-eyebrow">Book Online</span>
+        <div className="max-w-3xl mx-auto text-center">
+          <span className="section-eyebrow inline-block">Book Online</span>
           <h2 className="section-title text-brand-dark">
             Reserve your trailer{" "}
             <span className="text-brand-orange">in minutes.</span>
@@ -223,11 +247,53 @@ export default function BookingForm() {
                     value={data.trailerType}
                     onChange={update("trailerType")}
                     error={errors.trailerType}
-                    options={TRAILERS.map((t) => ({
-                      value: t.id,
-                      label: `${t.name} (${t.length})`,
-                    }))}
+                    options={[
+                      ...TRAILERS.map((t) => ({
+                        value: t.id,
+                        label: `${t.name} — ${t.width} × ${t.length}`,
+                      })),
+                      {
+                        value: CUSTOM_TRAILER_ID,
+                        label: "Custom dump trailer (model/size/capacity)",
+                      },
+                    ]}
                   />
+                  {usingCustomTrailer && (
+                    <>
+                      <Field
+                        label="Model / Series"
+                        name="customTrailerModel"
+                        value={data.customTrailerModel}
+                        onChange={update("customTrailerModel")}
+                        error={errors.customTrailerModel}
+                        placeholder="Ex: DTX Pro 16"
+                      />
+                      <Field
+                        label="Size (width x length)"
+                        name="customTrailerSize"
+                        value={data.customTrailerSize}
+                        onChange={update("customTrailerSize")}
+                        error={errors.customTrailerSize}
+                        placeholder="Ex: 7 ft x 16 ft"
+                      />
+                      <Field
+                        label="Side Height"
+                        name="customTrailerHeight"
+                        value={data.customTrailerHeight}
+                        onChange={update("customTrailerHeight")}
+                        error={errors.customTrailerHeight}
+                        placeholder="Ex: 4 ft"
+                      />
+                      <Field
+                        label="Estimated Capacity"
+                        name="customTrailerCapacity"
+                        value={data.customTrailerCapacity}
+                        onChange={update("customTrailerCapacity")}
+                        error={errors.customTrailerCapacity}
+                        placeholder="Ex: 16 yd3 or 12 tons"
+                      />
+                    </>
+                  )}
                   <Field
                     label="Service Date"
                     name="serviceDate"
@@ -440,6 +506,19 @@ function TextArea({
 
 function Summary({ trailer, data }) {
   const second = Math.round(trailer.price * 0.5);
+  const usingCustomTrailer = data.trailerType === CUSTOM_TRAILER_ID;
+  const trailerLabel = usingCustomTrailer
+    ? data.customTrailerModel || "Custom dump trailer"
+    : trailer.name;
+  const trailerSize = usingCustomTrailer
+    ? data.customTrailerSize || "—"
+    : trailer.size;
+  const trailerHeight = usingCustomTrailer
+    ? data.customTrailerHeight || "—"
+    : trailer.sideHeight || "—";
+  const trailerCapacity = usingCustomTrailer
+    ? data.customTrailerCapacity || "—"
+    : trailer.capacity;
   return (
     <div className="rounded-2xl bg-brand-dark text-white p-5 sm:p-6 md:p-8 shadow-xl">
       <div className="flex items-center gap-3">
@@ -449,7 +528,7 @@ function Summary({ trailer, data }) {
             Booking Summary
           </p>
           <p className="font-display text-lg sm:text-xl font-extrabold truncate">
-            {trailer.name}
+            {trailerLabel}
           </p>
         </div>
       </div>
@@ -460,6 +539,9 @@ function Summary({ trailer, data }) {
           label="Second Trailer (50% off, same job)"
           value={`$${second}`}
         />
+        <Line label="Trailer Size" value={trailerSize} />
+        <Line label="Side Height" value={trailerHeight} />
+        <Line label="Capacity" value={trailerCapacity} />
         <Line label="Service Date" value={data.serviceDate || "—"} />
         <Line
           label="Delivery Window"
@@ -514,6 +596,10 @@ function capitalize(s) {
 /* ---------- Success state ------------------------------------------------- */
 
 function SuccessState({ onReset, data }) {
+  const trailerLabel =
+    data.trailerType === CUSTOM_TRAILER_ID
+      ? data.customTrailerModel || "Custom dump trailer"
+      : data.trailerType;
   return (
     <div className="text-center py-4 sm:py-6">
       <div className="mx-auto grid h-14 w-14 sm:h-16 sm:w-16 place-items-center rounded-full bg-green-100 text-green-700">
@@ -542,7 +628,7 @@ function SuccessState({ onReset, data }) {
         lock in your service date.
       </p>
       <div className="mt-5 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-3 max-w-xl mx-auto text-left">
-        <SuccessTile label="Trailer" value={data.trailerType} />
+        <SuccessTile label="Trailer" value={trailerLabel} />
         <SuccessTile label="Date" value={data.serviceDate || "—"} />
         <SuccessTile
           label="Window"

@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import FAQ from "../components/FAQ";
@@ -14,20 +13,9 @@ export default function FAQPage() {
       <Header />
 
       <main className="flex-1">
-        <div className="bg-grid-dark pt-32 sm:pt-36 md:pt-40 pb-3">
-          <nav
-            aria-label="Breadcrumb"
-            className="container-page text-xs text-white/60"
-          >
-            <Link to="/" className="hover:text-brand-yellow">
-              Home
-            </Link>
-            <span className="mx-2">/</span>
-            <span className="text-white/90">FAQ</span>
-          </nav>
+        <div className="pt-28 sm:pt-32 md:pt-36">
+          <FAQ />
         </div>
-
-        <FAQ />
       </main>
 
       <Footer />

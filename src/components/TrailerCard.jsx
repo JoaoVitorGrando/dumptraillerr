@@ -44,11 +44,11 @@ export default function TrailerCard({ trailer, onSelect }) {
               <p className="text-[10px] uppercase tracking-[0.16em] text-white/75 font-semibold">
                 Selected Size
               </p>
-              <p className="font-display text-3xl sm:text-4xl font-extrabold">
+              <p className="text-3xl sm:text-4xl font-bold tabular-nums">
                 {trailer.length}
               </p>
             </div>
-            <p className="font-display text-2xl sm:text-3xl font-extrabold">
+            <p className="text-2xl sm:text-3xl font-bold tabular-nums">
               <span className="text-brand-yellow">$</span>
               {trailer.price}
             </p>
@@ -65,11 +65,14 @@ export default function TrailerCard({ trailer, onSelect }) {
           </p>
 
           <dl className="mt-4 sm:mt-5 space-y-2.5 text-sm">
-            <Row label="Size" value={trailer.size} />
+            <Row label="Width" value={trailer.width} />
             <Row label="Length" value={trailer.length} />
+            <Row label="Side Height" value={trailer.sideHeight} />
+            <Row label="Capacity" value={trailer.capacity} />
+            {trailer.gvwr && <Row label="GVWR" value={trailer.gvwr} />}
+            {trailer.payload && <Row label="Payload" value={trailer.payload} />}
             <Row label="Hitch" value={trailer.hitch} />
             <Row label="Electrical" value={trailer.electrical} />
-            <Row label="Capacity" value={trailer.capacity} />
           </dl>
 
           <ul className="mt-4 sm:mt-5 space-y-2">
@@ -99,7 +102,7 @@ export default function TrailerCard({ trailer, onSelect }) {
 
           <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-gray-100 flex items-center justify-between">
             <span className="text-sm text-gray-500">Booking from</span>
-            <span className="font-display text-xl sm:text-2xl font-extrabold text-brand-dark">
+            <span className="text-xl sm:text-2xl font-bold tabular-nums text-brand-dark">
               <span className="text-brand-yellow">$</span>
               {trailer.price}
             </span>

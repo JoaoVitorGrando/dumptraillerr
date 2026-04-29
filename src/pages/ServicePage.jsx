@@ -3,7 +3,7 @@ import { Link, useParams, Navigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import DumpTrailerPage from "./DumpTrailerPage";
-import { findService, SERVICES } from "../data/services";
+import { findPublicService, PUBLIC_SERVICES } from "../data/services";
 
 /* -------------------------------------------------------------------------- */
 /* Service detail page (/services/:slug)                                      */
@@ -15,7 +15,7 @@ import { findService, SERVICES } from "../data/services";
 
 export default function ServicePage() {
   const { slug } = useParams();
-  const service = findService(slug);
+  const service = findPublicService(slug);
   const otherServicesTrackRef = useRef(null);
 
   // Reset scroll position whenever the route changes so the user lands at the
@@ -56,7 +56,7 @@ export default function ServicePage() {
     return <DumpTrailerPage />;
   }
 
-  const others = SERVICES.filter((s) => s.slug !== service.slug);
+  const others = PUBLIC_SERVICES.filter((s) => s.slug !== service.slug);
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-light">
@@ -208,62 +208,64 @@ export default function ServicePage() {
           </div>
         </section>
 
-        {/* Other services */}
-        <section className="py-12 sm:py-16 md:py-20 bg-brand-light">
-          <div className="container-page">
-            <div className="flex items-end justify-between gap-4 flex-wrap">
-              <div>
-                <span className="section-eyebrow">Explore More</span>
-                <h2 className="section-title text-brand-dark">
-                  Other FAGU services
-                </h2>
-              </div>
-              <Link
-                to="/#services"
-                className="text-sm font-bold text-brand-yellow hover:text-brand-orange"
-              >
-                ← Back to all services
-              </Link>
-            </div>
-
-            <ul
-              ref={otherServicesTrackRef}
-              className="mt-8 flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 [scrollbar-width:thin]"
-              style={{ scrollbarColor: "#EB7231 transparent" }}
-            >
-              {others.map((s) => (
-                <li
-                  key={s.slug}
-                  data-other-card
-                  className="snap-start shrink-0 w-[82%] xs:w-[74%] sm:w-[48%] md:w-[38%] lg:w-[30%] xl:w-[24%]"
+        {/* Other services — only shown when multiple public services exist */}
+        {others.length > 0 && (
+          <section className="py-12 sm:py-16 md:py-20 bg-brand-light">
+            <div className="container-page">
+              <div className="flex items-end justify-between gap-4 flex-wrap">
+                <div>
+                  <span className="section-eyebrow">Explore More</span>
+                  <h2 className="section-title text-brand-dark">
+                    Other FAGU services
+                  </h2>
+                </div>
+                <Link
+                  to="/#services"
+                  className="text-sm font-bold text-brand-yellow hover:text-brand-orange"
                 >
-                  <Link
-                    to={`/services/${s.slug}`}
-                    className="group block overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:border-brand-yellow"
+                  ← Back to all services
+                </Link>
+              </div>
+
+              <ul
+                ref={otherServicesTrackRef}
+                className="mt-8 flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 [scrollbar-width:thin]"
+                style={{ scrollbarColor: "#EB7231 transparent" }}
+              >
+                {others.map((s) => (
+                  <li
+                    key={s.slug}
+                    data-other-card
+                    className="snap-start shrink-0 w-[82%] xs:w-[74%] sm:w-[48%] md:w-[38%] lg:w-[30%] xl:w-[24%]"
                   >
-                    <div className="relative aspect-[4/3] overflow-hidden">
-                      <img
-                        src={s.image}
-                        alt={s.name}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    </div>
-                    <div className="p-4">
-                      <p className="font-display text-lg font-extrabold text-brand-dark">
-                        {s.name}
-                      </p>
-                      <p className="mt-1 text-xs text-gray-500 line-clamp-2">
-                        {s.tagline}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+                    <Link
+                      to={`/services/${s.slug}`}
+                      className="group block overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:border-brand-yellow"
+                    >
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <img
+                          src={s.image}
+                          alt={s.name}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                      </div>
+                      <div className="p-4">
+                        <p className="font-display text-lg font-extrabold text-brand-dark">
+                          {s.name}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500 line-clamp-2">
+                          {s.tagline}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
       </main>
 
       <Footer />

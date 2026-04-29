@@ -24,7 +24,7 @@ export default function FinalCTA() {
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg md:text-xl text-brand-dark/80 max-w-2xl">
             Book a dump trailer in minutes, or partner with FAGU as an owner,
-            customer or driver — every flow is just one click away.
+            customer or driver, every flow is just one click away.
           </p>
         </div>
 
