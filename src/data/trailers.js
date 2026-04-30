@@ -1,8 +1,8 @@
-import dumpTrailer12x7 from "../assets/dumptrailler12x7.webp";
-import dumpTrailer14x7 from "../assets/dumptrailler14x7.jpg";
-import dumpTrailer16x7 from "../assets/DumpTrailer16x7.webp";
-import dumpTrailer18x7 from "../assets/Dumptrailler18x7.jpg";
-import dumpTrailer20x8 from "../assets/dumptrailler20x8.jpg";
+import dumpTrailer12x7 from "../assets/7x12.png";
+import dumpTrailer14x7 from "../assets/7x14.png";
+import dumpTrailer16x7 from "../assets/7x16.png";
+import dumpTrailer18x7 from "../assets/7x18.png";
+import dumpTrailer20x8 from "../assets/8x20.png";
 
 // FAGU dump trailer catalog with model-based categories and dedicated
 // photo per size/category.

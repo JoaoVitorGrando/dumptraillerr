@@ -12,13 +12,18 @@ import FaguBadge from "./FaguBadge";
 /* -------------------------------------------------------------------------- */
 
 const INITIAL = {
-  fullName: "",
-  phone: "",
+  renterType: "person",
+  renterName: "",
+  renterPhone: "",
+  companyName: "",
   email: "",
-  address: "",
-  city: "",
-  zip: "",
+  jobSiteClientName: "",
+  jobSiteClientPhone: "",
+  jobSiteAddress: "",
+  jobSiteCity: "",
+  jobSiteZip: "",
   trailerType: "standard-14x7",
+  trailerQuantity: "1",
   customTrailerModel: "",
   customTrailerSize: "",
   customTrailerHeight: "",
@@ -32,13 +37,17 @@ const INITIAL = {
 };
 
 const REQUIRED_FIELDS = [
-  "fullName",
-  "phone",
+  "renterType",
+  "renterName",
+  "renterPhone",
   "email",
-  "address",
-  "city",
-  "zip",
+  "jobSiteClientName",
+  "jobSiteClientPhone",
+  "jobSiteAddress",
+  "jobSiteCity",
+  "jobSiteZip",
   "trailerType",
+  "trailerQuantity",
   "serviceDate",
   "deliveryWindow",
   "loads",
@@ -118,11 +127,20 @@ export default function BookingForm() {
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
       errs.email = "Please enter a valid email address";
     }
-    if (values.phone && values.phone.replace(/\D/g, "").length < 7) {
-      errs.phone = "Please enter a valid phone number";
+    if (values.renterPhone && values.renterPhone.replace(/\D/g, "").length < 7) {
+      errs.renterPhone = "Please enter a valid phone number";
     }
-    if (values.zip && !/^\d{4,10}$/.test(values.zip.replace(/\D/g, ""))) {
-      errs.zip = "Please enter a valid ZIP code";
+    if (
+      values.jobSiteClientPhone &&
+      values.jobSiteClientPhone.replace(/\D/g, "").length < 7
+    ) {
+      errs.jobSiteClientPhone = "Please enter a valid phone number";
+    }
+    if (
+      values.jobSiteZip &&
+      !/^\d{4,10}$/.test(values.jobSiteZip.replace(/\D/g, ""))
+    ) {
+      errs.jobSiteZip = "Please enter a valid ZIP code";
     }
     return errs;
   };
@@ -178,28 +196,51 @@ export default function BookingForm() {
               <SuccessState onReset={resetForm} data={data} />
             ) : (
               <form onSubmit={handleSubmit} noValidate>
-                <FieldGroup title="Customer Information">
+                <FieldGroup title="Renter Information">
+                  <SelectField
+                    label="Renter Type"
+                    name="renterType"
+                    value={data.renterType}
+                    onChange={update("renterType")}
+                    error={errors.renterType}
+                    options={[
+                      { value: "person", label: "Person" },
+                      { value: "company", label: "Company" },
+                    ]}
+                  />
                   <Field
-                    label="Full Name"
-                    name="fullName"
-                    value={data.fullName}
-                    onChange={update("fullName")}
-                    error={errors.fullName}
+                    label="Renter Name"
+                    name="renterName"
+                    value={data.renterName}
+                    onChange={update("renterName")}
+                    error={errors.renterName}
                     placeholder="John Smith"
                     autoComplete="name"
                   />
+                  {data.renterType === "company" && (
+                    <Field
+                      label="Company Name"
+                      name="companyName"
+                      value={data.companyName}
+                      onChange={update("companyName")}
+                      error={errors.companyName}
+                      placeholder="ABC Roofing LLC"
+                      autoComplete="organization"
+                      className="sm:col-span-2"
+                    />
+                  )}
                   <Field
-                    label="Phone Number"
-                    name="phone"
+                    label="Renter Phone Number"
+                    name="renterPhone"
                     type="tel"
-                    value={data.phone}
-                    onChange={update("phone")}
-                    error={errors.phone}
+                    value={data.renterPhone}
+                    onChange={update("renterPhone")}
+                    error={errors.renterPhone}
                     placeholder="(555) 123-4567"
                     autoComplete="tel"
                   />
                   <Field
-                    label="Email"
+                    label="Renter Email"
                     name="email"
                     type="email"
                     value={data.email}
@@ -209,31 +250,52 @@ export default function BookingForm() {
                     autoComplete="email"
                     className="sm:col-span-2"
                   />
+                </FieldGroup>
+
+                <FieldGroup title="Job Site Client Information">
                   <Field
-                    label="Job Site Address"
-                    name="address"
-                    value={data.address}
-                    onChange={update("address")}
-                    error={errors.address}
+                    label="Client Name"
+                    name="jobSiteClientName"
+                    value={data.jobSiteClientName}
+                    onChange={update("jobSiteClientName")}
+                    error={errors.jobSiteClientName}
+                    placeholder="Homeowner / client name"
+                  />
+                  <Field
+                    label="Client Phone Number"
+                    name="jobSiteClientPhone"
+                    type="tel"
+                    value={data.jobSiteClientPhone}
+                    onChange={update("jobSiteClientPhone")}
+                    error={errors.jobSiteClientPhone}
+                    placeholder="(555) 123-4567"
+                    autoComplete="tel"
+                  />
+                  <Field
+                    label="Delivery Address"
+                    name="jobSiteAddress"
+                    value={data.jobSiteAddress}
+                    onChange={update("jobSiteAddress")}
+                    error={errors.jobSiteAddress}
                     placeholder="1234 Main Street"
                     autoComplete="street-address"
                     className="sm:col-span-2"
                   />
                   <Field
                     label="City"
-                    name="city"
-                    value={data.city}
-                    onChange={update("city")}
-                    error={errors.city}
+                    name="jobSiteCity"
+                    value={data.jobSiteCity}
+                    onChange={update("jobSiteCity")}
+                    error={errors.jobSiteCity}
                     placeholder="Dallas"
                     autoComplete="address-level2"
                   />
                   <Field
                     label="ZIP Code"
-                    name="zip"
-                    value={data.zip}
-                    onChange={update("zip")}
-                    error={errors.zip}
+                    name="jobSiteZip"
+                    value={data.jobSiteZip}
+                    onChange={update("jobSiteZip")}
+                    error={errors.jobSiteZip}
                     placeholder="75201"
                     autoComplete="postal-code"
                     inputMode="numeric"
@@ -256,6 +318,18 @@ export default function BookingForm() {
                         value: CUSTOM_TRAILER_ID,
                         label: "Custom dump trailer (model/size/capacity)",
                       },
+                    ]}
+                  />
+                  <SelectField
+                    label="Quantity of Dump Trailers"
+                    name="trailerQuantity"
+                    value={data.trailerQuantity}
+                    onChange={update("trailerQuantity")}
+                    error={errors.trailerQuantity}
+                    options={[
+                      { value: "1", label: "1 trailer" },
+                      { value: "2", label: "2 trailers" },
+                      { value: "3", label: "3 trailers" },
                     ]}
                   />
                   {usingCustomTrailer && (
@@ -505,7 +579,14 @@ function TextArea({
 }
 
 function Summary({ trailer, data }) {
-  const second = Math.round(trailer.price * 0.5);
+  const quantity = Number.parseInt(data.trailerQuantity || "1", 10) || 1;
+  const safeQuantity = Math.max(1, quantity);
+  const secondUnitPrice = Math.round(trailer.price * 0.5);
+  const additionalUnits = Math.max(0, safeQuantity - 2);
+  const totalToday =
+    trailer.price +
+    (safeQuantity >= 2 ? secondUnitPrice : 0) +
+    additionalUnits * trailer.price;
   const usingCustomTrailer = data.trailerType === CUSTOM_TRAILER_ID;
   const trailerLabel = usingCustomTrailer
     ? data.customTrailerModel || "Custom dump trailer"
@@ -535,10 +616,19 @@ function Summary({ trailer, data }) {
 
       <div className="mt-5 sm:mt-6 space-y-3 text-sm">
         <Line label="First Trailer" value={`$${trailer.price}`} highlight />
-        <Line
-          label="Second Trailer (50% off, same job)"
-          value={`$${second}`}
-        />
+        {safeQuantity >= 2 && (
+          <Line
+            label="Second Trailer (50% off, same job)"
+            value={`$${secondUnitPrice}`}
+          />
+        )}
+        {additionalUnits > 0 && (
+          <Line
+            label={`Extra Trailer${additionalUnits > 1 ? "s" : ""} (after second)`}
+            value={`$${additionalUnits * trailer.price}`}
+          />
+        )}
+        <Line label="Quantity" value={`${safeQuantity}`} />
         <Line label="Trailer Size" value={trailerSize} />
         <Line label="Side Height" value={trailerHeight} />
         <Line label="Capacity" value={trailerCapacity} />
@@ -555,6 +645,7 @@ function Summary({ trailer, data }) {
               : data.loads
           }
         />
+        <Line label="Total Today" value={`$${totalToday}`} highlight />
       </div>
 
       <div className="mt-5 sm:mt-6 rounded-lg border border-brand-yellow/40 bg-brand-yellow/10 p-3 sm:p-4 text-sm text-brand-yellow">
@@ -599,7 +690,7 @@ function SuccessState({ onReset, data }) {
   const trailerLabel =
     data.trailerType === CUSTOM_TRAILER_ID
       ? data.customTrailerModel || "Custom dump trailer"
-      : data.trailerType;
+      : TRAILERS.find((t) => t.id === data.trailerType)?.name || data.trailerType;
   return (
     <div className="text-center py-4 sm:py-6">
       <div className="mx-auto grid h-14 w-14 sm:h-16 sm:w-16 place-items-center rounded-full bg-green-100 text-green-700">
@@ -622,10 +713,15 @@ function SuccessState({ onReset, data }) {
       <p className="mt-2 text-gray-600 max-w-lg mx-auto text-sm sm:text-base px-2">
         Thanks,{" "}
         <strong>
-          {data.fullName.split(" ")[0] || "there"}
+          {data.renterName.split(" ")[0] || "there"}
         </strong>
-        ! We'll reach out shortly to confirm availability and payment so we can
-        lock in your service date.
+        ! Thank you for trusting FAGU Home Services. Our team will review your
+        request and contact you shortly with final confirmation.
+      </p>
+      <p className="mt-2 text-gray-600 max-w-xl mx-auto text-sm sm:text-base px-2">
+        Your trailer and date are only secured after payment confirmation. As
+        soon as payment is completed, we officially lock your reservation and
+        send your booking confirmation.
       </p>
       <div className="mt-5 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-3 max-w-xl mx-auto text-left">
         <SuccessTile label="Trailer" value={trailerLabel} />
@@ -643,9 +739,9 @@ function SuccessState({ onReset, data }) {
         >
           Submit Another Request
         </button>
-        <a href="#booking" className="btn-primary w-full sm:w-auto">
-          Review request details
-        </a>
+        <button type="button" className="btn-primary w-full sm:w-auto">
+          Proceed to Payment
+        </button>
       </div>
     </div>
   );

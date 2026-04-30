@@ -99,7 +99,7 @@ export default function Trailers() {
     <section id="trailers" className="pt-16 sm:pt-20 md:pt-28 pb-8 sm:pb-10 md:pb-12 bg-brand-light">
       <div className="container-page">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 sm:gap-6">
+        <div className="flex flex-col items-center text-center gap-5 sm:gap-6">
           <div className="max-w-2xl">
             <span className="section-eyebrow">Our Fleet · 12 – 20 ft</span>
             <h2 className="section-title text-brand-dark">
@@ -113,7 +113,7 @@ export default function Trailers() {
           </div>
           <a
             href="#booking"
-            className="btn-secondary self-start md:self-auto w-full sm:w-auto"
+            className="btn-secondary w-full sm:w-auto"
           >
             Check Availability
           </a>

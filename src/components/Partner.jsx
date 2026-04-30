@@ -218,10 +218,13 @@ export function OwnerForm({ cta = "Become a FAGU Owner" }) {
     email: "",
     city: "",
     state: "",
+    licensePlate: "",
     trailerCount: "1-3",
     trailerSizes: [],
     yardAddress: "",
     insurance: "yes-active",
+    insuranceDocument: [],
+    trailerPhotos: [],
     notes: "",
   };
   return (
@@ -242,11 +245,18 @@ export function OwnerForm({ cta = "Become a FAGU Owner" }) {
           e.email = "Enter a valid email";
         if (!v.city.trim()) e.city = "Required";
         if (!v.state.trim()) e.state = "Required";
+        if (!v.licensePlate.trim()) e.licensePlate = "Required";
         if (!v.yardAddress.trim()) e.yardAddress = "Required";
         if (!v.trailerSizes.length) e.trailerSizes = "Pick at least one size";
+        if (!v.insuranceDocument?.length) {
+          e.insuranceDocument = "Upload insurance file";
+        }
+        if (!v.trailerPhotos?.length) {
+          e.trailerPhotos = "Upload at least 1 trailer photo";
+        }
         return e;
       }}
-      render={({ data, errors, update, toggleArray }) => (
+      render={({ data, errors, update, updateFiles, toggleArray }) => (
         <>
           <Row2>
             <Input
@@ -306,6 +316,15 @@ export function OwnerForm({ cta = "Become a FAGU Owner" }) {
               placeholder="FL"
             />
           </Row2>
+          <Input
+            label="Trailer license plate"
+            name="licensePlate"
+            value={data.licensePlate}
+            onChange={update("licensePlate")}
+            error={errors.licensePlate}
+            required
+            placeholder="ABC-1234"
+          />
           <Row2>
             <Select
               label="How many trailers do you own?"
@@ -359,6 +378,27 @@ export function OwnerForm({ cta = "Become a FAGU Owner" }) {
             required
             placeholder="Where the trailers are stored"
           />
+          <Row2>
+            <FileInput
+              label="Insurance file"
+              name="insuranceDocument"
+              files={data.insuranceDocument}
+              onChange={updateFiles("insuranceDocument")}
+              error={errors.insuranceDocument}
+              required
+              accept=".pdf,image/*"
+            />
+            <FileInput
+              label="Trailer photos"
+              name="trailerPhotos"
+              files={data.trailerPhotos}
+              onChange={updateFiles("trailerPhotos")}
+              error={errors.trailerPhotos}
+              required
+              accept="image/*"
+              multiple
+            />
+          </Row2>
 
           <TextArea
             label="Anything else we should know?"
@@ -751,6 +791,17 @@ function FormShell({
     });
   };
 
+  const updateFiles = (field) => (e) => {
+    const files = Array.from(e?.target?.files || []);
+    setData((d) => ({ ...d, [field]: files }));
+    setErrors((errs) => {
+      if (!errs[field]) return errs;
+      const next = { ...errs };
+      delete next[field];
+      return next;
+    });
+  };
+
   const toggleArray = (field) => (value) => {
     setData((d) => {
       const set = new Set(d[field] || []);
@@ -777,7 +828,7 @@ function FormShell({
       return;
     }
     setSubmitting(true);
-    await submitLead(formType, data);
+    await submitLead(formType, serializeDataForLead(data));
     setSubmitting(false);
     setSubmitted(true);
   };
@@ -828,7 +879,7 @@ function FormShell({
       <p className="mt-1 text-gray-600 text-sm sm:text-base">{subheading}</p>
 
       <div className="mt-5 sm:mt-6 space-y-4">
-        {render({ data, errors, update, toggleArray })}
+        {render({ data, errors, update, updateFiles, toggleArray })}
       </div>
 
       <div className="mt-6 sm:mt-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -855,6 +906,25 @@ function FormShell({
 
 function Row2({ children }) {
   return <div className="grid sm:grid-cols-2 gap-4">{children}</div>;
+}
+
+function serializeDataForLead(data) {
+  const hasFileApi = typeof File !== "undefined";
+  return Object.fromEntries(
+    Object.entries(data).map(([key, value]) => {
+      if (
+        hasFileApi &&
+        Array.isArray(value) &&
+        value.every((item) => item instanceof File)
+      ) {
+        return [key, value.map((file) => file.name)];
+      }
+      if (hasFileApi && value instanceof File) {
+        return [key, value.name];
+      }
+      return [key, value];
+    })
+  );
 }
 
 const FIELD_BASE =
@@ -889,6 +959,42 @@ function Input({
         }`}
         {...rest}
       />
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+    </label>
+  );
+}
+
+function FileInput({
+  label,
+  name,
+  files = [],
+  onChange,
+  error,
+  accept,
+  required,
+  multiple = false,
+}) {
+  return (
+    <label className="block min-w-0">
+      <span className="block text-sm font-semibold text-gray-700 mb-1.5">
+        {label}
+        {required && <span className="text-brand-orange"> *</span>}
+      </span>
+      <input
+        name={name}
+        type="file"
+        onChange={onChange}
+        accept={accept}
+        multiple={multiple}
+        className={`${FIELD_BASE} px-3 py-2.5 file:mr-3 file:rounded-md file:border-0 file:bg-brand-yellow/20 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-brand-dark hover:file:bg-brand-yellow/30 ${
+          error ? "border-red-400" : "border-gray-300"
+        }`}
+      />
+      <p className="mt-1 text-xs text-gray-500">
+        {files.length
+          ? `${files.length} file${files.length > 1 ? "s" : ""} selected`
+          : "No file selected"}
+      </p>
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </label>
   );

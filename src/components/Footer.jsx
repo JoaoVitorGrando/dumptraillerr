@@ -22,40 +22,22 @@ export default function Footer() {
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
-          <details className="group">
-            <summary className="inline-flex cursor-pointer list-none items-center gap-2 text-white font-display font-bold tracking-wider hover:text-brand-yellow transition-colors">
-              Services
-              <span className="text-white/50 transition-transform group-open:rotate-180">
-                ▾
-              </span>
-            </summary>
-            <ul className="mt-3 space-y-2 text-sm">
-            {SERVICES.map((s) => (
-              <li key={s.slug}>
-                <Link
-                  to={`/services/${s.slug}`}
-                  className="hover:text-brand-yellow"
-                >
-                  {s.name}
-                  {!s.available && (
-                    <span className="ml-2 text-[10px] uppercase tracking-wider text-white/40">
-                      soon
-                    </span>
-                  )}
-                </Link>
-              </li>
-            ))}
-            </ul>
-          </details>
+            <FooterPopup title="Services">
+              {SERVICES.map((s) => (
+                <li key={s.slug}>
+                  <Link to={`/services/${s.slug}`} className="hover:text-brand-yellow">
+                    {s.name}
+                    {!s.available && (
+                      <span className="ml-2 text-[10px] uppercase tracking-wider text-white/40">
+                        soon
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </FooterPopup>
 
-          <details className="group">
-            <summary className="inline-flex cursor-pointer list-none items-center gap-2 text-white font-display font-bold tracking-wider hover:text-brand-yellow transition-colors">
-              Partner
-              <span className="text-white/50 transition-transform group-open:rotate-180">
-                ▾
-              </span>
-            </summary>
-            <ul className="mt-3 space-y-2 text-sm">
+            <FooterPopup title="Partner">
               <li>
                 <Link to="/partner/owner" className="hover:text-brand-yellow">
                   Trailer Owners
@@ -76,17 +58,9 @@ export default function Footer() {
                   All partner paths →
                 </Link>
               </li>
-            </ul>
-          </details>
+            </FooterPopup>
 
-          <details className="group">
-            <summary className="inline-flex cursor-pointer list-none items-center gap-2 text-white font-display font-bold tracking-wider hover:text-brand-yellow transition-colors">
-              Contact
-              <span className="text-white/50 transition-transform group-open:rotate-180">
-                ▾
-              </span>
-            </summary>
-            <ul className="mt-3 space-y-2 text-sm">
+            <FooterPopup title="Contact">
               <li>
                 <a
                   href={`tel:${API_CONFIG.contact.phone.replace(/\s+/g, "")}`}
@@ -109,8 +83,7 @@ export default function Footer() {
                   FAQ
                 </Link>
               </li>
-            </ul>
-          </details>
+            </FooterPopup>
           </div>
         </div>
       )}
@@ -118,7 +91,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="container-page py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-3 text-[11px] sm:text-xs text-white/50">
           <p>
-            © {year} FAGU Home Services. All rights reserved. Prices in USD.
+            © {year} FAGU Home Services. All rights reserved.
           </p>
           <p>
             Built for contractors, homeowners and crews who get things done.
@@ -126,5 +99,29 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+function FooterPopup({ title, children }) {
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        className="inline-flex cursor-default items-center gap-2 text-white font-display font-bold tracking-wider hover:text-brand-yellow transition-colors"
+      >
+        {title}
+        <span className="text-white/50 transition-transform group-hover:rotate-180 group-focus-within:rotate-180">
+          ▾
+        </span>
+      </button>
+
+      <ul className="mt-2 space-y-2 text-sm sm:hidden">
+        {children}
+      </ul>
+
+      <ul className="hidden sm:hidden sm:mt-2 sm:min-w-[220px] sm:space-y-2 sm:rounded-xl sm:border sm:border-white/10 sm:bg-brand-dark sm:p-3 sm:text-sm sm:shadow-xl sm:group-hover:block sm:group-focus-within:block">
+        {children}
+      </ul>
+    </div>
   );
 }
