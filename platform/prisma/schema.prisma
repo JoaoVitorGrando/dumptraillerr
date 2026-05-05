@@ -1,0 +1,246 @@
+// FAGU Platform — Prisma Schema
+// Banco: Supabase PostgreSQL
+// Rodar após receber credenciais:
+//   npx prisma migrate dev --name initial_schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // usado pelo Prisma Migrate (não pooler)
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  CUSTOMER
+  OWNER
+  DRIVER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum TrailerStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum OperationalEventType {
+  PICKUP
+  DELIVERY
+  RETURN
+}
+
+// ─────────────────────────────────────────────
+// Modelos
+// ─────────────────────────────────────────────
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  phone     String?
+  role      UserRole   @default(CUSTOMER)
+  status    UserStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  customerProfile CustomerProfile?
+  ownerProfile    OwnerProfile?
+  driverProfile   DriverProfile?
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+model CustomerProfile {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  preferredAddress String?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  reviews  Review[]
+
+  @@map("customer_profiles")
+}
+
+model OwnerProfile {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  companyName String?
+  taxId       String?
+  documentUrl String?
+  approvedAt  DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trailers Trailer[]
+
+  @@map("owner_profiles")
+}
+
+model DriverProfile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  licenseNumber  String?
+  licenseExpiry  DateTime?
+  documentUrl    String?
+  approvedAt     DateTime?
+
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings         Booking[]
+  operationalEvents OperationalEvent[]
+
+  @@map("driver_profiles")
+}
+
+model Trailer {
+  id             String        @id @default(cuid())
+  ownerId        String
+  name           String
+  slug           String        @unique
+  size           String
+  capacity       String
+  gvwr           String
+  payload        String
+  pricePerPeriod Int           // em centavos (USD)
+  status         TrailerStatus @default(AVAILABLE)
+  images         String[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  owner        OwnerProfile          @relation(fields: [ownerId], references: [id])
+  bookings     Booking[]
+  availability TrailerAvailability[]
+
+  @@index([status])
+  @@map("trailers")
+}
+
+model TrailerAvailability {
+  id           String   @id @default(cuid())
+  trailerId    String
+  blockedFrom  DateTime
+  blockedUntil DateTime
+  reason       String?
+
+  trailer Trailer @relation(fields: [trailerId], references: [id], onDelete: Cascade)
+
+  @@index([blockedFrom, blockedUntil])
+  @@map("trailer_availability")
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  customerId      String
+  trailerId       String
+  driverId        String?
+  status          BookingStatus @default(PENDING)
+  deliveryAddress String
+  serviceDate     DateTime
+  deliveryWindow  String
+  materialType    String
+  loads           String
+  totalAmount     Int           // em centavos (USD)
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  customer          CustomerProfile    @relation(fields: [customerId], references: [id])
+  trailer           Trailer            @relation(fields: [trailerId], references: [id])
+  driver            DriverProfile?     @relation(fields: [driverId], references: [id])
+  payment           Payment?
+  operationalEvents OperationalEvent[]
+  review            Review?
+  auditLogs         AuditLog[]
+
+  @@index([serviceDate])
+  @@map("bookings")
+}
+
+model Payment {
+  id                      String        @id @default(cuid())
+  bookingId               String        @unique
+  stripePaymentIntentId   String?
+  stripeCheckoutSessionId String?       @unique
+  amount                  Int           // em centavos (USD)
+  status                  PaymentStatus @default(PENDING)
+  paidAt                  DateTime?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([stripePaymentIntentId])
+  @@map("payments")
+}
+
+model OperationalEvent {
+  id        String               @id @default(cuid())
+  bookingId String
+  driverId  String
+  type      OperationalEventType
+  photoUrls String[]
+  signatureUrl String?
+  lat       Float?
+  lng       Float?
+  createdAt DateTime             @default(now())
+
+  booking Booking       @relation(fields: [bookingId], references: [id])
+  driver  DriverProfile @relation(fields: [driverId], references: [id])
+
+  @@map("operational_events")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  bookingId  String   @unique
+  customerId String
+  rating     Int      // 1–5
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  booking  Booking         @relation(fields: [bookingId], references: [id])
+  customer CustomerProfile @relation(fields: [customerId], references: [id])
+
+  @@map("reviews")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  action    String
+  entity    String
+  entityId  String?
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@map("audit_logs")
+}

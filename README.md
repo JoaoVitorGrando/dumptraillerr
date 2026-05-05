@@ -69,12 +69,24 @@ size, side height, capacidade) e é validada antes do submit.
 
 ## 5. Stack
 
-- **React 18** + **Vite** (SPA com React Router)
+### Landing page (estado atual — Vite)
+- **React 19** + **Vite** (SPA com React Router)
 - **TailwindCSS 3** com tema FAGU (paleta + tipografia)
 - Fonte: Bebas Neue (display) + Inter (body)
 - Lead capture: **GoHighLevel** webhooks (um por formulário)
-- Pagamentos (futuro): **Stripe Checkout**
-- Sem backend próprio — formulários POSTam direto nos webhooks
+- Pagamentos: **Stripe Checkout** (demo mode — integração pendente)
+
+### Plataforma completa (stack de destino — Next.js)
+- **Next.js 15 + TypeScript** — base fullstack com App Router, SSR e Server Actions
+- **Supabase PostgreSQL** — banco relacional com RLS por perfil
+- **Prisma** — ORM com migrations tipadas
+- **Supabase Auth + Storage** — autenticação e upload de documentos/evidências
+- **Stripe Checkout + Webhooks** — cobrança antecipada e conciliação
+- **GoHighLevel API + Webhooks** — CRM, pipeline e comunicação automatizada
+- **Mapbox / Google Maps** — geocodificação e contexto de rota
+- **Vercel + Sentry** — deploy contínuo e monitoramento de erros
+
+> A migração da landing page Vite → Next.js está detalhada na Fase 2 do plano de implementação.
 
 ---
 
@@ -199,12 +211,8 @@ Tipografia: **Bebas Neue** (display, uppercase) + **Inter** (texto corrido).
 
 ---
 
-## 11. Próximos passos (roadmap curto)
+## 11. Roadmap
 
-1. Conectar webhooks GHL reais e validar payloads em produção.
-2. Plugar Stripe Checkout no fluxo de booking (substituir página simulada).
-3. Endpoint de disponibilidade real (datas bloqueadas) na API antes de
-   confirmar reserva.
-4. Liberar 1ª categoria adicional (provavelmente Enclosed ou Utility) —
-   basta virar a flag e revisar copy/preço.
-5. Painel interno de owners para gerenciar frota e disponibilidade.
+O plano de implementação completo e detalhado está em [`planoimplementação.md`](./planoimplementação.md).
+
+Esse arquivo é a fonte de verdade para todas as decisões de desenvolvimento — 13 fases desde a fundação técnica até o go-live. Sempre consulte e atualize ele à medida que o projeto avança.

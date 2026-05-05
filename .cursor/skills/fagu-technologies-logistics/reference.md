@@ -44,122 +44,104 @@ Conectar clientes diretamente com prestadores de serviço, reduzindo custo para 
 
 ## 1) Resumo Executivo
 
-Plataforma web para gestão de aluguel de dump trailers integrando:
+Plataforma transacional para aluguel de dump trailers integrando:
 
-- proprietários de frota;
-- motoristas logísticos;
-- empresas de roofing;
-- administração da Fagu.
+- Owner (frota e receita);
+- Driver (execucao operacional);
+- Customer (reserva e pagamento);
+- Admin Fagu (governanca da plataforma).
 
-Meta principal:
+Meta principal atualizada:
 
-- MVP funcional em 1 semana;
-- frota inicial de 100 trailers;
-- 5 depósitos;
-- automação GoHighLevel;
-- pagamento antecipado.
+- MVP funcional em **12 a 16 semanas**;
+- desenvolvimento por **um unico desenvolvedor**;
+- qualidade tecnica como requisito inegociavel;
+- construcao em **vertical slices** com validacao por fase;
+- foco no ciclo que gera receita: Reserva -> Pagamento -> Entrega -> Avaliacao.
 
 ## 2) Personas e Fluxos Operacionais
 
-- **Owner:** dono com 4+ trailers, foco em ocupação e automação.
-- **Driver:** motorista com truck próprio, até 4 trailers/dia.
-- **Roofing Company:** cliente que aluga para descarte de resíduos.
-- **Admin (Fagu):** gestão de usuários, faturamento, auditoria e suporte.
+- **Owner:** gerencia trailers, disponibilidade, calendario, faturamento e depositos.
+- **Driver:** executa coleta/entrega/devolucao via fluxo mobile com fotos e assinatura.
+- **Customer:** reserva, paga, acompanha status e avalia servico.
+- **Admin (Fagu):** aprova cadastros, monitora saude do sistema e resolve excecoes.
 
-## 3) Escopo Técnico por Módulo (Story Points)
+## 3) Escopo Tecnico do MVP
 
-### 3.1 Base e Gestão
+### 3.1 Capabilidades essenciais
 
-1. Autenticação & Autorização (40 SP)  
-   RBAC, JWT + refresh token, 2FA para owners.
+1. Cadastro e KYC de Owner/Driver/Customer com aprovacao.
+2. Catalogo de trailers e disponibilidade por periodo.
+3. Reserva com prevencao de conflitos.
+4. Pagamento Stripe com webhook idempotente e retry.
+5. Execucao operacional com evidencias (foto/assinatura).
+6. Integracao GoHighLevel para comunicacao e pipeline.
+7. Painel administrativo com auditoria e controles globais.
 
-2. Cadastro de Usuários & KYC (80 SP)  
-   Onboarding, validação de CNH/seguro, Stripe Connect.
+### 3.2 Itens explicitamente adiados para v1.0
 
-3. Catálogo de Trailers & Ativos (100 SP)  
-   CRUD, VIN, placa, status ativo/manutenção, inspeções.
+1. Stripe Connect para split automatico.
+2. GPS continuo em tempo real.
+3. Marketplace aberto de drivers.
+4. App nativo iOS/Android.
+5. Otimizacao automatica de rotas.
+6. Inteligencia preditiva de demanda e preco.
 
-4. Gestão de Depósitos (50 SP)  
-   Inventário em 5 locais, alertas de capacidade.
+## 4) Stack Tecnologica Consolidada
 
-### 3.2 Operação e Logística
+- **App Web:** Next.js 15 + TypeScript
+- **Banco:** Supabase PostgreSQL com RLS
+- **ORM:** Prisma
+- **Auth e Storage:** Supabase Auth + Storage
+- **Pagamentos:** Stripe Checkout + Webhooks
+- **CRM:** GoHighLevel API + Webhooks
+- **Mapas:** Mapbox/Google Maps
+- **Deploy e monitoramento:** Vercel + Sentry
 
-5. Reservas e Agendamento (120 SP)  
-   Disponibilidade, prevenção de conflitos, recorrência.
+## 5) Roadmap Oficial (Solo Developer)
 
-6. Sistema de Pagamentos (90 SP)  
-   Cobrança antecipada de aluguel + taxa, webhooks Stripe.
+### Fase 0 (Semana 1) — Fundacao tecnica
+- setup de projeto, banco, autenticacao base, deploy e observabilidade.
 
-7. Logística & Drivers (150 SP)  
-   GPS em tempo real, rotas via Google Maps, foto + assinatura.
+### Fase 1 (Semanas 2-3) — Cadastros e KYC
+- onboarding por perfil, upload de documentos e integracao inicial com GHL.
 
-8. Gestão de Landfill & Lixo (70 SP)  
-   Cálculo por pesagem e cobrança dinâmica por tonelada.
+### Fase 2 (Semanas 4-5) — Reservas + Stripe
+- catalogo, bloqueio anti-conflito, checkout e confirmacao de pagamento.
 
-### 3.3 Integrações e Dashboards
+### Fase 3 (Semanas 6-7) — Dashboard Owner
+- gestao de frota, calendario e visao financeira.
 
-9. Integração GoHighLevel (80 SP)  
-   Sincronização bidirecional e automações SMS/WhatsApp.
+### Fase 4 (Semanas 8-9) — App Driver (PWA)
+- jobs mobile, fotos, assinatura e status em campo.
 
-10. Dashboards & BI (70 SP)  
-    Ganhos, ocupação, performance de motoristas.
+### Fase 5 (Semanas 10-11) — Portal Cliente + ciclo GHL
+- area do cliente, historico/faturas e sincronizacao bidirecional com GHL.
 
-11. Manutenção Preventiva (40 SP)  
-    Alertas por tempo/uso (pneus, freios, elétrica).
+### Fase 6 (Semanas 12-13) — Admin + Hardening
+- painel admin, trilha de auditoria, testes E2E e revisao de seguranca/performance.
 
-12. Painel Administrativo (60 SP)  
-    Gestão de transações, reembolsos e bloqueio de usuários.
+### Fase 7 (Semanas 14-16) — Go-live e estabilizacao
+- producao, suporte inicial, ajustes por uso real e documentacao final.
 
-## 4) Stack Tecnológica Proposta
+## 6) Riscos e Mitigacoes
 
-- **Backend:** Node.js 18+ / TypeScript
-- **Framework:** Express.js / Prisma ORM
-- **Frontend:** React.js / Vite / Tailwind
-- **Banco:** PostgreSQL 14+
-- **Tempo real:** Socket.io / Redis
-- **Infra:** AWS (EC2, RDS, S3)
+- **Pagamentos/webhooks:** risco de duplicidade ou perda de evento.  
+  Mitigacao: idempotencia, retry controlado e rastreabilidade de eventos.
 
-## 5) Matriz de Esforço e Precificação (MVP 2 Semanas)
+- **Isolamento de dados (RLS):** risco de exposicao entre tenants/perfis.  
+  Mitigacao: politicas RLS por padrao + testes de autorizacao por perfil.
 
-- Backend Developer (Senior): 2
-- Frontend Developer (Senior): 1
-- QA/Tester: 1
-- DevOps/PM (part-time): 1
-- Total: 5 pessoas
-- Referência de custo: US$ 7/h
+- **Integracoes externas:** indisponibilidade GHL/Stripe degradar operacao.  
+  Mitigacao: filas, retentativas e observabilidade ativa.
 
-## 6) Roadmap
+- **Concorrencia de reservas:** risco de dupla alocacao no mesmo periodo.  
+  Mitigacao: locks transacionais e validacao atomica de disponibilidade.
 
-### Sprint 1 (Dias 1-7) — Fundação e Cadastro
+## 7) Requisitos Nao Funcionais
 
-- Setup AWS e CI/CD;
-- módulos 1, 2, 3, 4;
-- frontend de login/registro/gestão de frota.
-
-Entrega: base funcional para cadastro validado.
-
-### Sprint 2 (Dias 8-14) — Core Business e MVP
-
-- módulos 5, 6, 7, 9;
-- Stripe para pagamento antecipado;
-- logística básica (sem otimização avançada).
-
-Entrega: agendamento + pagamento + confirmação de entrega.
-
-## 7) Riscos e Mitigações
-
-- **Risco principal:** geolocalização em tempo real (Módulo 7).  
-  Mitigação: biblioteca madura de tracking e foco em precisão antes de UI.
-
-- **Risco Stripe:** falhas em webhooks.  
-  Mitigação: fila de retry (BullMQ) + observabilidade.
-
-- **Risco de escala:** concorrência em reservas simultâneas.  
-  Mitigação: locks no banco e estratégia transacional no Prisma/PostgreSQL.
-
-## 8) Requisitos Não-Funcionais
-
-1. Performance: API < 200ms.
-2. Segurança: criptografia de dados e conformidade PCI-DSS.
-3. Disponibilidade: SLA 99,5% + backups diários no RDS.
-4. Escalabilidade: até 1.000 trailers sem refatoração estrutural.
+1. Confiabilidade dos fluxos criticos antes do go-live.
+2. Seguranca de autenticacao, sessao e dados sensiveis.
+3. Observabilidade com logs, alertas e monitoramento de incidentes.
+4. Performance previsivel em operacao real.
+5. Escalabilidade para crescimento ate 1.000 trailers.
