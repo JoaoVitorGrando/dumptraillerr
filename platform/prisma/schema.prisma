@@ -177,7 +177,7 @@ model Booking {
   payment           Payment?
   operationalEvents OperationalEvent[]
   review            Review?
-  auditLogs         AuditLog[]
+  auditLogs         AuditLog[]         @relation("BookingAuditLogs")
 
   @@index([serviceDate])
   @@map("bookings")
@@ -234,13 +234,15 @@ model Review {
 model AuditLog {
   id        String   @id @default(cuid())
   actorId   String
+  bookingId String?
   action    String
   entity    String
   entityId  String?
   payload   Json?
   createdAt DateTime @default(now())
 
-  actor User @relation(fields: [actorId], references: [id])
+  actor   User     @relation(fields: [actorId], references: [id])
+  booking Booking? @relation("BookingAuditLogs", fields: [bookingId], references: [id])
 
   @@map("audit_logs")
 }

@@ -103,11 +103,60 @@ export default function BookingForm() {
       return;
     }
     setSubmitting(true);
-    await submitLead("booking", {
+
+    // 1. Submit lead to GHL (CRM) — não bloqueia se falhar
+    submitLead("booking", {
       ...data,
       trailerName: usingCustomTrailer ? data.customTrailerModel : selectedTrailer?.name,
       trailerPrice: selectedTrailer?.price,
-    });
+    }).catch(() => {});
+
+    // 2. Calcular total para o Stripe
+    const days = Math.max(
+      1,
+      data.loads === "custom" ? parseInt(data.customLoads || "1", 10) : parseInt(data.loads, 10)
+    );
+    // price está em dólares inteiros (ex: 175 = $175/dia). Convertemos para cents.
+    const pricePerDayCents = usingCustomTrailer
+      ? 17500
+      : (selectedTrailer?.price ?? 175) * 100;
+    const totalCents = pricePerDayCents * days;
+
+    // Calcular pickup date = serviceDate + days
+    let pickupDate = data.serviceDate;
+    if (data.serviceDate) {
+      const d = new Date(data.serviceDate);
+      d.setDate(d.getDate() + days);
+      pickupDate = d.toISOString().split("T")[0];
+    }
+
+    // 3. Criar Stripe Checkout Session
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trailerName: usingCustomTrailer ? data.customTrailerModel : selectedTrailer?.name,
+          trailerSize: usingCustomTrailer ? data.customTrailerSize : selectedTrailer?.id,
+          deliveryDate: data.serviceDate,
+          pickupDate,
+          days,
+          totalCents,
+          customerEmail: data.email,
+          cancelUrl: window.location.href,
+        }),
+      });
+
+      const json = (await res.json()) as { url?: string; error?: string };
+
+      if (json.url) {
+        window.location.href = json.url;
+        return; // navegação ocorre — não precisa setar estado
+      }
+    } catch {
+      // Stripe indisponível — fallback para confirmação local
+    }
+
     setSubmitting(false);
     setSubmitted(true);
   };
