@@ -26,7 +26,7 @@ const QUESTIONS = [
   },
   {
     q: "What if I need to cancel or reschedule?",
-    a: "Please reach out as early as possible. We do our best to accommodate changes — cancellation terms are included in your booking confirmation email.",
+    a: "Contact us as early as possible. We'll do our best to adjust your date based on availability and policy.",
   },
   {
     q: "How long can I keep the trailer?",
@@ -47,18 +47,6 @@ const QUESTIONS = [
   {
     q: "How high can I load the trailer?",
     a: "Please keep debris level with the top rail unless your booking specifically includes high-side configuration. Material stacked above safe transport height may need to be reloaded before pickup.",
-  },
-  {
-    q: "Can I mix different materials in one load?",
-    a: "You can mix many common debris types, but some materials must be separated due to landfill and recycling rules. If your project includes special waste, tell us in advance so we can guide you.",
-  },
-  {
-    q: "Are mattresses, appliances, tires, or concrete allowed?",
-    a: "These items may be accepted with special handling or additional disposal fees depending on local facilities. Let us know before delivery so we can confirm pricing and acceptance.",
-  },
-  {
-    q: "What happens if the trailer blocks access or sinks on soft ground?",
-    a: "Use a firm, level surface and keep clear access for pickup. If relocation or recovery is required due to site conditions, additional service charges may apply.",
   },
   {
     q: "How quickly can I get a trailer?",
@@ -102,12 +90,11 @@ export default function FAQ() {
         <div>
           <span className="section-eyebrow">FAQ</span>
           <h2 className="section-title text-brand-dark">
-            Got questions?{" "}
-            <span className="text-brand-orange">We&apos;ve got answers.</span>
+            Dump trailer questions,{" "}
+            <span className="text-brand-orange">answered clearly.</span>
           </h2>
           <p className="mt-3 sm:mt-4 text-gray-600 text-base sm:text-lg">
-            Can&apos;t find what you&apos;re looking for? Reach out and we&apos;ll help you
-            choose the right trailer for your project.
+            Everything below is focused on dump trailer rental, delivery, pricing, and booking.
           </p>
           <div className="mt-8 sm:mt-10">
             {/* eslint-disable-next-line @next/next/no-img-element */}

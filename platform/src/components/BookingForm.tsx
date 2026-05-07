@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState, ChangeEvent, FormEvent } from "react";
+import Link from "next/link";
 import { TRAILERS } from "@/data/trailers";
 import { submitLead } from "@/services/leads";
 import { env } from "@/config/env";
 import FaguBadge from "@/components/FaguBadge";
 import type { Trailer } from "@/types";
+import { createClient } from "@/lib/supabase/client";
 
 const isDemoMode = !env.NEXT_PUBLIC_GHL_BOOKING_WEBHOOK;
 const CUSTOM_TRAILER_ID = "custom-dump-trailer";
@@ -49,11 +51,24 @@ const REQUIRED_FIELDS: (keyof FormData)[] = [
   "serviceDate", "deliveryWindow", "loads", "materialType",
 ];
 
+function computeTrailerDailyTotal(basePrice: number, quantity: number) {
+  const safeQty = Math.max(1, quantity);
+  const secondPrice = Math.round(basePrice * 0.5);
+  const extras = Math.max(0, safeQty - 2);
+  return basePrice + (safeQty >= 2 ? secondPrice : 0) + extras * basePrice;
+}
+
 export default function BookingForm() {
   const [data, setData] = useState<FormData>(INITIAL);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authRedirect, setAuthRedirect] = useState("/services/dump-trailer#booking");
+  const [authRequiredError, setAuthRequiredError] = useState<string | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -62,6 +77,50 @@ export default function BookingForm() {
     };
     window.addEventListener("trailer:select", handler);
     return () => window.removeEventListener("trailer:select", handler);
+  }, []);
+  useEffect(() => {
+    let mounted = true;
+
+    try {
+      const supabase = createClient();
+
+      setAuthRedirect(`${window.location.pathname}${window.location.search}#booking`);
+
+      supabase.auth.getSession().then(({ data: sessionData }) => {
+        if (!mounted) return;
+        setIsAuthenticated(Boolean(sessionData.session));
+        const email = sessionData.session?.user?.email ?? "";
+        setAuthEmail(email);
+        if (email) {
+          setData((prev) => ({ ...prev, email: prev.email || email }));
+        }
+        setAuthChecked(true);
+      });
+
+      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!mounted) return;
+        setIsAuthenticated(Boolean(session));
+        const email = session?.user?.email ?? "";
+        setAuthEmail(email);
+        if (email) {
+          setData((prev) => ({ ...prev, email: prev.email || email }));
+        }
+      });
+
+      return () => {
+        mounted = false;
+        listener.subscription.unsubscribe();
+      };
+    } catch {
+      if (mounted) {
+        setIsAuthenticated(false);
+        setAuthChecked(true);
+      }
+    }
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const selectedTrailer = useMemo(
@@ -73,6 +132,7 @@ export default function BookingForm() {
   const update = (field: keyof FormData) => (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const value = e.target.value;
     setData((d) => ({ ...d, [field]: value }));
+    if (authRequiredError) setAuthRequiredError(null);
     setErrors((errs) => { if (!errs[field]) return errs; const next = { ...errs }; delete next[field]; return next; });
   };
 
@@ -93,8 +153,79 @@ export default function BookingForm() {
     return errs;
   };
 
+  const getCheckoutPayload = (values: FormData) => {
+    const trailer = TRAILERS.find((t) => t.id === values.trailerType) ?? TRAILERS[0];
+    const customTrailer = values.trailerType === CUSTOM_TRAILER_ID;
+    const quantity = Math.max(1, parseInt(values.trailerQuantity || "1", 10) || 1);
+
+    const days = Math.max(
+      1,
+      values.loads === "custom" ? parseInt(values.customLoads || "1", 10) : parseInt(values.loads, 10)
+    );
+
+    // price está em dólares inteiros (ex: 175 = $175/dia).
+    const basePricePerTrailer = customTrailer ? 175 : (trailer?.price ?? 175);
+    const dailyTotalDollars = computeTrailerDailyTotal(basePricePerTrailer, quantity);
+    const totalCents = dailyTotalDollars * days * 100;
+
+    // Calcular pickup date = serviceDate + days
+    let pickupDate = values.serviceDate;
+    if (values.serviceDate) {
+      const d = new Date(values.serviceDate);
+      d.setDate(d.getDate() + days);
+      pickupDate = d.toISOString().split("T")[0];
+    }
+
+    return {
+      trailerName: customTrailer ? values.customTrailerModel : trailer?.name,
+      trailerSize: customTrailer ? values.customTrailerSize : trailer?.id,
+      trailerImage: trailer?.image,
+      deliveryDate: values.serviceDate,
+      pickupDate,
+      days,
+      quantity,
+      totalCents,
+      customerEmail: authEmail || values.email,
+      address: values.jobSiteAddress,
+      city: values.jobSiteCity,
+      notes: values.notes,
+      cancelUrl: window.location.href,
+    };
+  };
+
+  const startCheckout = async (values: FormData) => {
+    setCheckoutError(null);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(getCheckoutPayload(values)),
+      });
+
+      const json = (await res.json()) as { url?: string; error?: string };
+
+      if (json.url) {
+        window.location.href = json.url;
+        return true;
+      }
+
+      if (json.error) {
+        setCheckoutError(json.error);
+      }
+    } catch {
+      // Checkout indisponível — exibe fallback visual
+      setCheckoutError("Não foi possível abrir o checkout agora. Tente novamente.");
+    }
+
+    return false;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      setAuthRequiredError("Please log in or create an account before submitting your booking.");
+      return;
+    }
     const errs = validate(data);
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
@@ -111,51 +242,9 @@ export default function BookingForm() {
       trailerPrice: selectedTrailer?.price,
     }).catch(() => {});
 
-    // 2. Calcular total para o Stripe
-    const days = Math.max(
-      1,
-      data.loads === "custom" ? parseInt(data.customLoads || "1", 10) : parseInt(data.loads, 10)
-    );
-    // price está em dólares inteiros (ex: 175 = $175/dia). Convertemos para cents.
-    const pricePerDayCents = usingCustomTrailer
-      ? 17500
-      : (selectedTrailer?.price ?? 175) * 100;
-    const totalCents = pricePerDayCents * days;
-
-    // Calcular pickup date = serviceDate + days
-    let pickupDate = data.serviceDate;
-    if (data.serviceDate) {
-      const d = new Date(data.serviceDate);
-      d.setDate(d.getDate() + days);
-      pickupDate = d.toISOString().split("T")[0];
-    }
-
-    // 3. Criar Stripe Checkout Session
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          trailerName: usingCustomTrailer ? data.customTrailerModel : selectedTrailer?.name,
-          trailerSize: usingCustomTrailer ? data.customTrailerSize : selectedTrailer?.id,
-          deliveryDate: data.serviceDate,
-          pickupDate,
-          days,
-          totalCents,
-          customerEmail: data.email,
-          cancelUrl: window.location.href,
-        }),
-      });
-
-      const json = (await res.json()) as { url?: string; error?: string };
-
-      if (json.url) {
-        window.location.href = json.url;
-        return; // navegação ocorre — não precisa setar estado
-      }
-    } catch {
-      // Stripe indisponível — fallback para confirmação local
-    }
+    // 2. Criar Stripe Checkout Session
+    const redirected = await startCheckout(data);
+    if (redirected) return; // navegação ocorre — não precisa setar estado
 
     setSubmitting(false);
     setSubmitted(true);
@@ -180,9 +269,39 @@ export default function BookingForm() {
           {/* Form card */}
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-5 sm:p-6 md:p-10 order-2 lg:order-1">
             {submitted ? (
-              <SuccessState onReset={resetForm} data={data} />
+              <SuccessState
+                onReset={resetForm}
+                data={data}
+                onProceedToPayment={() => startCheckout(data)}
+                checkoutError={checkoutError}
+              />
             ) : (
               <form onSubmit={handleSubmit} noValidate>
+                {authChecked && !isAuthenticated && (
+                  <div className="mb-6 rounded-xl border border-brand-orange/20 bg-brand-orange/5 p-4 sm:p-5">
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-brand-orange font-bold">
+                      Visitor mode
+                    </p>
+                    <p className="mt-1 text-sm sm:text-base text-gray-700">
+                      You can fill the form, but you need to login before sending your booking.
+                    </p>
+                    <div className="mt-3 flex flex-col sm:flex-row gap-2.5">
+                      <Link href={`/auth/login?redirectTo=${encodeURIComponent(authRedirect)}`} className="btn-primary w-full sm:w-auto !py-2.5">
+                        Login
+                      </Link>
+                      <Link href={`/auth/signup?redirectTo=${encodeURIComponent(authRedirect)}`} className="btn-secondary w-full sm:w-auto !py-2.5">
+                        Create account
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {authRequiredError && (
+                  <div className="mb-5 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2.5">
+                    {authRequiredError}
+                  </div>
+                )}
+
                 <FieldGroup title="Renter Information">
                   <SelectField label="Renter Type" name="renterType" value={data.renterType} onChange={update("renterType")} error={errors.renterType}
                     options={[{ value: "person", label: "Person" }, { value: "company", label: "Company" }]} />
@@ -324,7 +443,12 @@ function Summary({ trailer, data }: { trailer: Trailer; data: FormData }) {
   const safeQty = Math.max(1, quantity);
   const secondPrice = Math.round(trailer.price * 0.5);
   const extras = Math.max(0, safeQty - 2);
-  const total = trailer.price + (safeQty >= 2 ? secondPrice : 0) + extras * trailer.price;
+  const perDayTotal = computeTrailerDailyTotal(trailer.price, safeQty);
+  const days = Math.max(
+    1,
+    data.loads === "custom" ? parseInt(data.customLoads || "1", 10) : parseInt(data.loads || "1", 10)
+  );
+  const total = perDayTotal * days;
   const usingCustom = data.trailerType === CUSTOM_TRAILER_ID;
   const trailerLabel = usingCustom ? data.customTrailerModel || "Custom dump trailer" : trailer.name;
   const trailerSize = usingCustom ? data.customTrailerSize || "—" : trailer.size;
@@ -351,7 +475,8 @@ function Summary({ trailer, data }: { trailer: Trailer; data: FormData }) {
         <SummaryLine label="Service Date" value={data.serviceDate || "—"} />
         <SummaryLine label="Delivery Window" value={capitalize(data.deliveryWindow) || "—"} />
         <SummaryLine label="Loads" value={data.loads === "custom" ? data.customLoads || "Custom" : data.loads} />
-        <SummaryLine label="Total Today" value={`$${total}`} highlight />
+        <SummaryLine label="Daily Total" value={`$${perDayTotal}`} />
+        <SummaryLine label="Estimated Total" value={`$${total}`} highlight />
       </div>
       <div className="mt-5 sm:mt-6 rounded-lg border border-brand-yellow/40 bg-brand-yellow/10 p-3 sm:p-4 text-sm text-brand-yellow">
         <p className="font-semibold">Heads up:</p>
@@ -381,10 +506,27 @@ function capitalize(s: string) {
 
 /* ─── Success state ──────────────────────────────────────────────────────── */
 
-function SuccessState({ onReset, data }: { onReset: () => void; data: FormData }) {
+function SuccessState({
+  onReset,
+  data,
+  onProceedToPayment,
+  checkoutError,
+}: {
+  onReset: () => void;
+  data: FormData;
+  onProceedToPayment: () => Promise<boolean>;
+  checkoutError: string | null;
+}) {
   const trailerLabel = data.trailerType === CUSTOM_TRAILER_ID
     ? data.customTrailerModel || "Custom dump trailer"
     : TRAILERS.find((t) => t.id === data.trailerType)?.name || data.trailerType;
+  const [openingCheckout, setOpeningCheckout] = useState(false);
+
+  const handleProceed = async () => {
+    setOpeningCheckout(true);
+    await onProceedToPayment();
+    setOpeningCheckout(false);
+  };
 
   return (
     <div className="text-center py-4 sm:py-6">
@@ -407,8 +549,20 @@ function SuccessState({ onReset, data }: { onReset: () => void; data: FormData }
       </div>
       <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 justify-center">
         <button type="button" onClick={onReset} className="btn-secondary w-full sm:w-auto">Submit Another Request</button>
-        <button type="button" className="btn-primary w-full sm:w-auto">Proceed to Payment</button>
+        <button
+          type="button"
+          onClick={handleProceed}
+          disabled={openingCheckout}
+          className="btn-primary w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {openingCheckout ? "Opening checkout..." : "Proceed to Payment"}
+        </button>
       </div>
+      {checkoutError && (
+        <p className="mt-3 text-sm text-red-600">
+          {checkoutError}
+        </p>
+      )}
     </div>
   );
 }
@@ -421,3 +575,10 @@ function SuccessTile({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+
+
+
+
+
+

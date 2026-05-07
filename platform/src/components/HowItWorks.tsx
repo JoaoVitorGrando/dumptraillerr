@@ -2,7 +2,7 @@ const STEPS = [
   {
     n: "01",
     title: "Pick your trailer",
-    text: "Choose between the 7x14x4 or the 7x16x4 dump trailer based on the size of your project.",
+    text: "Select the dump trailer size that matches your project, from 12 ft to 20 ft options.",
   },
   {
     n: "02",
@@ -38,12 +38,11 @@ export default function HowItWorks() {
         <div className="max-w-3xl">
           <span className="section-eyebrow">How It Works</span>
           <h2 className="section-title">
-            Six easy steps to{" "}
-            <span className="text-brand-yellow">get rolling.</span>
+            Dump trailer rental in{" "}
+            <span className="text-brand-yellow">6 simple steps.</span>
           </h2>
           <p className="mt-3 sm:mt-4 text-white/70 text-base sm:text-lg">
-            We've simplified the rental process so contractors, homeowners, and
-            crews can book in minutes and stay focused on the job.
+            A straightforward process so you can book fast and focus on the job.
           </p>
         </div>
 

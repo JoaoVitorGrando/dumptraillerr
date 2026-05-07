@@ -1,6 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+type UserRole = "customer" | "owner" | "driver" | "admin";
+
+function normalizeRole(value: unknown): UserRole {
+  const role = String(value ?? "").toLowerCase();
+  if (role === "owner" || role === "driver" || role === "admin") return role;
+  return "customer";
+}
+
+function getRoleHome(role: UserRole) {
+  if (role === "admin") return "/admin";
+  return `/dashboard/${role}`;
+}
+
 /**
  * Middleware de autenticação e proteção de rotas.
  * Roda em todas as rotas configuradas no matcher abaixo.
@@ -16,7 +29,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: object }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
@@ -49,13 +62,39 @@ export async function middleware(request: NextRequest) {
   if (isProtected && !user) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/auth/login";
-    loginUrl.searchParams.set("redirectTo", path);
+    loginUrl.searchParams.set("redirectTo", `${path}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Usuário logado tentando acessar páginas de auth — redireciona para home
+  if (user) {
+    const role = normalizeRole(user.user_metadata?.role);
+    const roleHome = getRoleHome(role);
+
+    if (path === "/dashboard") {
+      return NextResponse.redirect(new URL(roleHome, request.url));
+    }
+
+    if (path.startsWith("/admin") && role !== "admin") {
+      return NextResponse.redirect(new URL(roleHome, request.url));
+    }
+
+    if (path.startsWith("/dashboard/customer") && role !== "customer") {
+      return NextResponse.redirect(new URL(roleHome, request.url));
+    }
+
+    if (path.startsWith("/dashboard/owner") && role !== "owner") {
+      return NextResponse.redirect(new URL(roleHome, request.url));
+    }
+
+    if (path.startsWith("/dashboard/driver") && role !== "driver") {
+      return NextResponse.redirect(new URL(roleHome, request.url));
+    }
+  }
+
+  // Usuário logado tentando acessar páginas de auth — redireciona para dashboard do papel
   if (user && (path.startsWith("/auth/login") || path.startsWith("/auth/signup"))) {
-    return NextResponse.redirect(new URL("/", request.url));
+    const role = normalizeRole(user.user_metadata?.role);
+    return NextResponse.redirect(new URL(getRoleHome(role), request.url));
   }
 
   return supabaseResponse;

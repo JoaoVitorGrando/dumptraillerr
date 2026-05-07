@@ -6,9 +6,9 @@ export const metadata = {
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-brand-light flex flex-col">
+    <div className="h-screen overflow-hidden bg-grid-dark text-white flex flex-col">
       {/* Minimal top bar */}
-      <header className="py-4 px-6 flex items-center justify-between">
+      <header className="py-4 px-6 flex items-center justify-between shrink-0 border-b border-white/10">
         <Link href="/" className="inline-flex items-center gap-2 group">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -19,19 +19,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </Link>
         <Link
           href="/"
-          className="text-sm font-medium text-brand-gray hover:text-brand-dark transition-colors"
+          className="text-sm font-medium text-white/70 hover:text-brand-yellow transition-colors"
         >
           ← Back to site
         </Link>
       </header>
 
       {/* Centered card area */}
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
+      <main className="flex-1 min-h-0 flex items-center justify-center px-4 py-6">
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="py-4 text-center text-xs text-brand-gray">
+      <footer className="py-3 text-center text-xs text-white/45 shrink-0 border-t border-white/10">
         © {new Date().getFullYear()} FAGU Home Services · Seattle, WA
       </footer>
     </div>

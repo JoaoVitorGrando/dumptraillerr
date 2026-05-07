@@ -42,6 +42,8 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState("");
 
   const supabase = createClient();
 
@@ -60,7 +62,7 @@ function SignupForm() {
 
     setLoading(true);
 
-    const { error: authError } = await supabase.auth.signUp({
+    const { data: signUpData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -73,14 +75,65 @@ function SignupForm() {
     });
 
     if (authError) {
-      setError(authError.message);
+      const msg = authError.message.toLowerCase();
+      if (msg.includes("rate limit") || msg.includes("security purposes")) {
+        setError("Too many attempts in a short time. Please wait a few minutes and try again.");
+      } else {
+        setError(authError.message);
+      }
       setLoading(false);
-    } else {
-      setSuccess(true);
+      return;
     }
+
+    const isExistingAccount =
+      signUpData.user &&
+      Array.isArray(signUpData.user.identities) &&
+      signUpData.user.identities.length === 0;
+
+    if (isExistingAccount) {
+      setError("This email is already registered. Try signing in or reset your password.");
+      setLoading(false);
+      return;
+    }
+
+    // If email confirmation is disabled in Supabase, session may be created immediately.
+    if (signUpData.session) {
+      router.push(redirectTo);
+      router.refresh();
+      return;
+    }
+
+    setSuccess(true);
+    setLoading(false);
   }
 
   if (success) {
+    async function handleResendEmail() {
+      setResending(true);
+      setResendMsg("");
+
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
+        },
+      });
+
+      if (resendError) {
+        const msg = resendError.message.toLowerCase();
+        if (msg.includes("rate limit") || msg.includes("security purposes")) {
+          setResendMsg("Rate limit reached. Wait a few minutes before resending.");
+        } else {
+          setResendMsg("Could not resend now. Please try again in a minute.");
+        }
+      } else {
+        setResendMsg("Confirmation email resent. Please check inbox/spam.");
+      }
+
+      setResending(false);
+    }
+
     return (
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
         <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5 text-3xl">
@@ -94,6 +147,20 @@ function SignupForm() {
           <span className="font-semibold text-brand-dark">{email}</span>.
           Click it to activate your account and start using FAGU.
         </p>
+        <p className="text-xs text-brand-gray mb-4">
+          If you did not receive it, check your spam/promotions folder.
+        </p>
+        <button
+          type="button"
+          onClick={handleResendEmail}
+          disabled={resending}
+          className="btn-secondary inline-flex mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {resending ? "Resending..." : "Resend confirmation email"}
+        </button>
+        {resendMsg && (
+          <p className="text-xs text-brand-gray mb-4">{resendMsg}</p>
+        )}
         <Link href="/auth/login" className="btn-primary inline-flex">
           Back to Sign In
         </Link>

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import FaguBadge from "@/components/FaguBadge";
+import { API_CONFIG } from "@/config/api";
 
 export const metadata: Metadata = {
   title: "Booking Confirmed — FAGU Home Services",
@@ -9,121 +11,134 @@ interface Props {
   searchParams: Promise<{ session_id?: string; demo?: string }>;
 }
 
+const STEPS = [
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+        <polyline points="22,6 12,13 2,6" />
+      </svg>
+    ),
+    title: "Confirmation email",
+    desc: "Booking details and receipt sent to your inbox.",
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />
+      </svg>
+    ),
+    title: "We confirm delivery",
+    desc: "Our team will call within 2 hours to lock in your window.",
+  },
+  {
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1" y="6" width="14" height="11" rx="1" />
+        <polygon points="15 9 21 9 23 13 23 17 15 17 15 9" />
+        <circle cx="6" cy="19" r="2" />
+        <circle cx="18" cy="19" r="2" />
+      </svg>
+    ),
+    title: "Trailer delivered",
+    desc: "Arrives the evening before your service date.",
+  },
+];
+
 export default async function BookingSuccessPage({ searchParams }: Props) {
   const { session_id, demo } = await searchParams;
   const isDemo = demo === "true" || (session_id?.startsWith("demo_") ?? false);
+  const phone = API_CONFIG.contact.phone;
+  const email = API_CONFIG.contact.email;
 
   return (
-    <main className="flex-1 flex items-center justify-center px-4 py-20">
-      <div className="max-w-lg w-full text-center">
-        {/* Checkmark animation */}
-        <div className="relative mx-auto w-24 h-24 mb-8">
-          <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
-            <svg
-              width={48}
-              height={48}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#16a34a"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
+    <main className="h-screen w-screen overflow-hidden flex flex-col bg-grid-dark text-white">
+      <div className="h-1.5 w-full bg-hazard-stripes shrink-0" />
+
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 min-h-0">
+        <div className="w-full max-w-3xl flex flex-col items-center text-center gap-5 sm:gap-6">
+
+          <FaguBadge size="lg" bare className="!h-16 !w-16 sm:!h-20 sm:!w-20" />
+
+          <div className="flex items-center gap-2">
+            <div className="relative grid h-9 w-9 place-items-center rounded-full bg-brand-orange/15 border border-brand-orange/40">
+              <span className="absolute inset-0 rounded-full bg-brand-orange/15 animate-ping opacity-40" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#eb7231" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+            </div>
+            <span className="text-brand-orange text-[11px] sm:text-xs font-bold uppercase tracking-[0.22em]">
+              Payment Confirmed
+            </span>
           </div>
-          {/* Hazard stripe accent */}
-          <div
-            className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-1.5 w-16 rounded-full"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(45deg,#eb7231 0,#eb7231 4px,#d75227 4px,#d75227 8px)",
-            }}
-          />
-        </div>
 
-        <h1 className="font-display text-4xl font-bold text-brand-dark mb-3">
-          Booking Confirmed! 🎉
-        </h1>
+          <div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold uppercase leading-[0.95]">
+              Thank you for choosing{" "}
+              <span className="text-brand-orange">FAGU.</span>
+            </h1>
+            <p className="mt-3 text-white/60 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+              Your dump trailer reservation is confirmed. We&apos;re already preparing your delivery — relax, we&apos;ll take it from here.
+            </p>
+          </div>
 
-        <p className="text-brand-gray text-lg mb-2">
-          Your dump trailer is reserved and on its way.
-        </p>
+          {isDemo ? (
+            <div className="rounded-md border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-[11px] text-amber-300 font-semibold uppercase tracking-wider">
+              Demo mode — no real payment was processed
+            </div>
+          ) : (
+            session_id && (
+              <p className="text-[10px] text-white/25 font-mono">Ref: {session_id}</p>
+            )
+          )}
 
-        {isDemo ? (
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-8 inline-block">
-            <strong>Demo mode</strong> — No real payment was processed.
-            Connect Stripe to activate real payments.
-          </p>
-        ) : (
-          <p className="text-sm text-brand-gray mb-8">
-            A confirmation email is on its way.
-            {session_id && (
-              <span className="block text-xs text-gray-400 mt-1">
-                Reference: {session_id}
-              </span>
-            )}
-          </p>
-        )}
-
-        {/* What happens next */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-left mb-8">
-          <h2 className="font-bold text-brand-dark text-sm mb-4">What happens next</h2>
-          <ol className="space-y-3">
-            {[
-              {
-                icon: "📧",
-                title: "Confirmation email",
-                desc: "Check your inbox for booking details and a receipt.",
-              },
-              {
-                icon: "📞",
-                title: "We'll call to confirm delivery",
-                desc: "Our team will confirm the delivery window within 2 hours.",
-              },
-              {
-                icon: "🚛",
-                title: "Trailer delivered",
-                desc: "A driver will deliver your trailer to the address on the booking day.",
-              },
-              {
-                icon: "✅",
-                title: "Pickup when you're done",
-                desc: "We'll pick it up on the scheduled pickup date — no hassle.",
-              },
-            ].map((step, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <span className="text-xl shrink-0 mt-0.5">{step.icon}</span>
-                <div>
-                  <p className="font-semibold text-brand-dark text-sm">{step.title}</p>
-                  <p className="text-xs text-brand-gray">{step.desc}</p>
+          <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-1">
+            {STEPS.map((step, i) => (
+              <div
+                key={step.title}
+                className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-4 sm:p-5 text-left hover:border-brand-orange/40 transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="grid h-7 w-7 place-items-center rounded-md bg-brand-orange text-white font-extrabold text-[11px]">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-brand-orange">{step.icon}</span>
                 </div>
-              </li>
+                <p className="font-bold text-white text-sm leading-snug">{step.title}</p>
+                <p className="mt-1 text-white/45 text-[12px] leading-relaxed">{step.desc}</p>
+              </div>
             ))}
-          </ol>
-        </div>
+          </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/dashboard/customer/bookings" className="btn-primary inline-flex">
-            View My Bookings
-          </Link>
-          <Link href="/" className="btn-secondary inline-flex">
-            Back to Home
-          </Link>
-        </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mt-1">
+            <Link
+              href="/dashboard/customer/bookings"
+              className="btn-primary flex-1 text-center !py-3 !text-sm"
+            >
+              View My Bookings
+            </Link>
+            <Link
+              href="/"
+              className="btn-outline-light flex-1 text-center !py-3 !text-sm"
+            >
+              Back to Home
+            </Link>
+          </div>
 
-        {/* Contact */}
-        <p className="mt-8 text-xs text-brand-gray">
-          Questions?{" "}
-          <Link href="/contact" className="text-brand-orange hover:underline font-medium">
-            Contact us
-          </Link>{" "}
-          or call{" "}
-          <a href="tel:+12065550199" className="text-brand-orange hover:underline font-medium">
-            (206) 555-0199
-          </a>
-        </p>
+          <p className="text-[11px] text-white/30">
+            Questions?{" "}
+            <a href={`mailto:${email}`} className="text-brand-orange hover:text-white transition-colors font-medium">
+              {email}
+            </a>
+            {" · "}
+            <a href={`tel:${phone.replace(/\s+/g, "")}`} className="text-brand-orange hover:text-white transition-colors font-medium">
+              {phone}
+            </a>
+          </p>
+        </div>
       </div>
+
+      <div className="h-1.5 w-full bg-hazard-stripes shrink-0" />
     </main>
   );
 }

@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+type UserRole = "customer" | "owner" | "driver" | "admin";
+
+function normalizeRole(value: unknown): UserRole {
+  const role = String(value ?? "").toLowerCase();
+  if (role === "owner" || role === "driver" || role === "admin") return role;
+  return "customer";
+}
+
+function getRoleHome(role: UserRole) {
+  if (role === "admin") return "/admin";
+  return `/dashboard/${role}`;
+}
+
 /**
  * OAuth / Magic Link callback handler.
  * Supabase redirects here after the user clicks the email link.
@@ -23,7 +36,7 @@ export async function GET(request: NextRequest) {
           getAll() {
             return cookieStore.getAll();
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: { name: string; value: string; options?: object }[]) {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             );
@@ -35,9 +48,16 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // Redirect to requested page (or home if invalid)
       const safe = redirectTo.startsWith("/") ? redirectTo : "/";
-      return NextResponse.redirect(`${origin}${safe}`);
+      if (safe !== "/") {
+        return NextResponse.redirect(`${origin}${safe}`);
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const role = normalizeRole(user?.user_metadata?.role);
+      return NextResponse.redirect(`${origin}${getRoleHome(role)}`);
     }
   }
 

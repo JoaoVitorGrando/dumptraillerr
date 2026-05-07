@@ -102,9 +102,34 @@ function FooterSection({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <p className="text-white font-display font-bold tracking-wider mb-2">{title}</p>
-      <ul className="space-y-2 text-sm">{children}</ul>
+    <div className="group/footer">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 text-white font-display font-bold tracking-wider"
+        aria-label={`Open ${title} details`}
+      >
+        {title}
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-brand-yellow transition-transform duration-200 group-hover/footer:rotate-180 group-focus-within/footer:rotate-180"
+          aria-hidden
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      <div className="mt-0 max-h-0 overflow-hidden opacity-0 transition-all duration-300 group-hover/footer:mt-2 group-hover/footer:max-h-[30rem] group-hover/footer:opacity-100 group-focus-within/footer:mt-2 group-focus-within/footer:max-h-[30rem] group-focus-within/footer:opacity-100">
+        <div className="min-w-[220px] max-w-[280px] rounded-xl border border-white/10 bg-brand-dark/95 backdrop-blur p-3 shadow-2xl">
+        <ul className="space-y-2 text-sm">{children}</ul>
+        </div>
+      </div>
     </div>
   );
 }

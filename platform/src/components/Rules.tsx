@@ -36,14 +36,13 @@ export default function Rules() {
     <section id="rules" className="py-16 sm:py-20 md:py-28 bg-white">
       <div className="container-page">
         <div className="max-w-3xl">
-          <span className="section-eyebrow">Rental Rules</span>
+          <span className="section-eyebrow">Dump Trailer Rules</span>
           <h2 className="section-title text-brand-dark">
-            Straightforward terms.{" "}
-            <span className="text-brand-orange">No surprises.</span>
+            Clear terms for every{" "}
+            <span className="text-brand-orange">dump trailer rental.</span>
           </h2>
           <p className="mt-3 sm:mt-4 text-gray-600 text-base sm:text-lg">
-            We keep our pricing and policies simple so you know exactly what
-            you&apos;re paying for before you book.
+            Pricing and policies are simple, transparent, and focused on dump trailer jobs.
           </p>
         </div>
 
@@ -57,11 +56,10 @@ export default function Rules() {
           <div>
             <p className="section-eyebrow !mb-2">Pricing Example</p>
             <h3 className="text-xl sm:text-2xl md:text-3xl font-extrabold uppercase">
-              Two trailers, one job site
+              Same job site, two trailers
             </h3>
             <p className="mt-2 text-white/70 text-sm sm:text-base">
-              When a single trailer isn&apos;t enough, our 50% discount on the second
-              trailer keeps your project moving without breaking the budget.
+              For one project at one address: first trailer is full rate, second trailer is 50% off.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 text-center min-w-0">

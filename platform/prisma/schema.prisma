@@ -152,6 +152,7 @@ model TrailerAvailability {
   trailer Trailer @relation(fields: [trailerId], references: [id], onDelete: Cascade)
 
   @@index([blockedFrom, blockedUntil])
+  @@index([trailerId, blockedFrom, blockedUntil])
   @@map("trailer_availability")
 }
 
@@ -163,11 +164,13 @@ model Booking {
   status          BookingStatus @default(PENDING)
   deliveryAddress String
   serviceDate     DateTime
+  pickupDate      DateTime?
   deliveryWindow  String
   materialType    String
   loads           String
   totalAmount     Int           // em centavos (USD)
   notes           String?
+  expiresAt       DateTime?     // TTL para bookings PENDING (15 min)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -180,8 +183,11 @@ model Booking {
   auditLogs         AuditLog[]         @relation("BookingAuditLogs")
 
   @@index([serviceDate])
+  @@index([trailerId, serviceDate, status])
   @@map("bookings")
 }
+
+
 
 model Payment {
   id                      String        @id @default(cuid())

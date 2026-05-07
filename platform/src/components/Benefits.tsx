@@ -10,8 +10,8 @@ const ITEMS = [
     icon: "calendar",
   },
   {
-    title: "Two Trailer Sizes",
-    text: "Choose between our 14 ft and 16 ft dump trailers depending on the size of your project.",
+    title: "Multiple Dump Trailer Sizes",
+    text: "Choose the right dump trailer size from 12 ft to 20 ft, based on your project volume.",
     icon: "ruler",
   },
   {
@@ -36,14 +36,13 @@ export default function Benefits() {
     <section className="py-16 sm:py-20 md:py-28 bg-white">
       <div className="container-page">
         <div className="max-w-3xl">
-          <span className="section-eyebrow">Why Choose Us</span>
+          <span className="section-eyebrow">Why FAGU Dump Trailers</span>
           <h2 className="section-title text-brand-dark">
-            Heavy-duty rentals,{" "}
-            <span className="text-brand-orange">light on the hassle.</span>
+            Built for heavy debris.{" "}
+            <span className="text-brand-orange">Simple to rent.</span>
           </h2>
           <p className="mt-3 sm:mt-4 text-gray-600 text-base sm:text-lg">
-            Everything you need to keep your job site clean, on time, and on
-            budget — from quick online booking to flexible delivery windows.
+            Fast booking, reliable delivery, and clear pricing for dump trailer projects.
           </p>
         </div>
 

@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/webhooks/stripe
- * Recebe eventos do Stripe e executa ações no banco.
- *
- * Configurar no Stripe Dashboard:
- *   Endpoint URL: https://seudominio.com/api/webhooks/stripe
- *   Eventos: checkout.session.completed, payment_intent.payment_failed
- *
- * Variáveis necessárias:
- *   STRIPE_SECRET_KEY
- *   STRIPE_WEBHOOK_SECRET   (via `stripe listen --forward-to localhost:3000/api/webhooks/stripe`)
+ * Recebe eventos do Stripe e atualiza Booking + Payment no banco.
  */
 export async function POST(request: NextRequest) {
-  // Sem credenciais → apenas confirma recebimento (desenvolvimento)
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-    return NextResponse.json({ received: true, demo: true });
+  const missingKeys: string[] = [];
+  if (!process.env.STRIPE_SECRET_KEY) missingKeys.push("STRIPE_SECRET_KEY");
+  if (!process.env.STRIPE_WEBHOOK_SECRET) missingKeys.push("STRIPE_WEBHOOK_SECRET");
+
+  if (missingKeys.length > 0) {
+    return NextResponse.json({ received: true, demo: true, missingKeys });
   }
 
   const body = await request.text();
@@ -28,7 +24,7 @@ export async function POST(request: NextRequest) {
   try {
     const Stripe = (await import("stripe")).default;
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-12-18.acacia",
+      apiVersion: "2025-02-24.acacia",
     });
 
     const event = stripe.webhooks.constructEvent(
@@ -40,28 +36,18 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as import("stripe").Stripe.Checkout.Session;
-        // TODO: criar booking no Supabase
-        // await createBooking({
-        //   stripeSessionId: session.id,
-        //   customerEmail: session.customer_email,
-        //   trailerSize: session.metadata?.trailerSize,
-        //   deliveryDate: session.metadata?.deliveryDate,
-        //   pickupDate: session.metadata?.pickupDate,
-        //   amountPaid: session.amount_total,
-        // });
-        console.log("✅ Booking confirmed:", session.id);
+
+        await handleCheckoutCompleted(session);
         break;
       }
 
       case "payment_intent.payment_failed": {
         const intent = event.data.object as import("stripe").Stripe.PaymentIntent;
-        // TODO: notificar cliente via GHL/email
-        console.log("❌ Payment failed:", intent.id);
+        await handlePaymentFailed(intent.id);
         break;
       }
 
       default:
-        // Evento não tratado — OK
         break;
     }
 
@@ -73,7 +59,61 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Desabilitar body parsing do Next.js — Stripe precisa do raw body para verificar assinatura
+async function handleCheckoutCompleted(
+  session: import("stripe").Stripe.Checkout.Session
+) {
+  const sessionId = session.id;
+
+  // Idempotência: verificar se já foi processado
+  const payment = await prisma.payment.findUnique({
+    where: { stripeCheckoutSessionId: sessionId },
+    select: { id: true, bookingId: true, status: true },
+  });
+
+  if (!payment) {
+    console.warn("Payment record not found for session:", sessionId);
+    return;
+  }
+
+  if (payment.status === "PAID") {
+    console.warn("Already processed:", sessionId);
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: "PAID",
+        paidAt: new Date(),
+        stripePaymentIntentId: session.payment_intent as string | null,
+      },
+    }),
+    prisma.booking.update({
+      where: { id: payment.bookingId },
+      data: { status: "CONFIRMED", expiresAt: null },
+    }),
+  ]);
+
+  console.warn("Booking confirmed:", payment.bookingId);
+}
+
+async function handlePaymentFailed(paymentIntentId: string) {
+  const payment = await prisma.payment.findFirst({
+    where: { stripePaymentIntentId: paymentIntentId },
+    select: { id: true, bookingId: true },
+  });
+
+  if (!payment) return;
+
+  await prisma.payment.update({
+    where: { id: payment.id },
+    data: { status: "FAILED" },
+  });
+
+  console.warn("Payment failed for booking:", payment.bookingId);
+}
+
 export const config = {
   api: { bodyParser: false },
 };

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { DEMO_BOOKINGS, formatCents, statusColor, statusLabel } from "@/data/demo";
+import { formatCents, statusColor, statusLabel } from "@/data/demo";
+import { getDemoBookingsForUser } from "@/lib/demoBookings";
 
 export const metadata = { title: "My Bookings — FAGU Home Services" };
 
@@ -10,8 +11,8 @@ export default async function CustomerBookingsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login?redirectTo=/dashboard/customer/bookings");
 
-  // TODO: query real — await supabase.from("bookings").select("*").eq("customer_id", user.id)
-  const bookings = DEMO_BOOKINGS;
+  // Modo demo: bookings persistidas por usuário via cookie.
+  const bookings = await getDemoBookingsForUser(user.email);
 
   return (
     <div>
@@ -20,7 +21,7 @@ export default async function CustomerBookingsPage() {
           <h1 className="font-display text-3xl font-bold text-brand-dark">My Bookings</h1>
           <p className="text-brand-gray mt-1 text-sm">{bookings.length} total bookings</p>
         </div>
-        <Link href="/dashboard/customer/book" className="btn-primary shrink-0">
+        <Link href="/services/dump-trailer#booking" className="btn-primary shrink-0">
           + New Booking
         </Link>
       </div>
@@ -32,7 +33,7 @@ export default async function CustomerBookingsPage() {
           <p className="text-brand-gray text-sm mb-6">
             Book your first dump trailer in minutes.
           </p>
-          <Link href="/dashboard/customer/book" className="btn-primary inline-flex">
+          <Link href="/services/dump-trailer#booking" className="btn-primary inline-flex">
             Book Now
           </Link>
         </div>
