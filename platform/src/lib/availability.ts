@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 
-export interface AvailabilityResult {
+interface AvailabilityResult {
   available: boolean;
   conflictingBookingIds: string[];
   conflictingBlockIds: string[];

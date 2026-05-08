@@ -4,7 +4,8 @@ import FleetClient from "./FleetClient";
 export const metadata = { title: "Fleet — Admin FAGU" };
 
 export default async function AdminFleetPage() {
-  const trailers = await prisma.trailer.findMany({
+  const [trailers, owners] = await Promise.all([
+    prisma.trailer.findMany({
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
@@ -13,8 +14,14 @@ export default async function AdminFleetPage() {
       size: true,
       pricePerPeriod: true,
       status: true,
+        capacity: true,
+        gvwr: true,
+        payload: true,
+        currentLocationType: true,
+        currentLocationLabel: true,
       images: true,
       owner: { select: { companyName: true, user: { select: { email: true } } } },
+        ownerId: true,
       bookings: {
         where: { status: { in: ["CONFIRMED", "IN_PROGRESS"] } },
         orderBy: { serviceDate: "asc" },
@@ -23,7 +30,17 @@ export default async function AdminFleetPage() {
       },
       _count: { select: { bookings: { where: { status: "COMPLETED" } } } },
     },
-  });
+    }),
+    prisma.ownerProfile.findMany({
+      where: { approvedAt: { not: null } },
+      orderBy: { approvedAt: "desc" },
+      select: {
+        id: true,
+        companyName: true,
+        user: { select: { email: true } },
+      },
+    }),
+  ]);
 
   const serialized = trailers.map((t) => ({
     ...t,
@@ -34,5 +51,10 @@ export default async function AdminFleetPage() {
     })),
   }));
 
-  return <FleetClient initialTrailers={serialized} />;
+  const ownerOptions = owners.map((o) => ({
+    id: o.id,
+    label: o.companyName || o.user.email,
+  }));
+
+  return <FleetClient initialTrailers={serialized} ownerOptions={ownerOptions} />;
 }

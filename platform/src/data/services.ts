@@ -384,8 +384,5 @@ export const PUBLIC_SERVICES = SHOW_ONLY_DUMP_TRAILERS
   ? SERVICES.filter((s) => s.slug === "dump-trailer")
   : SERVICES;
 
-export const findService = (slug: string): Service | null =>
-  SERVICES.find((s) => s.slug === slug) ?? null;
-
 export const findPublicService = (slug: string): Service | null =>
   PUBLIC_SERVICES.find((s) => s.slug === slug) ?? null;

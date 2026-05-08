@@ -3,6 +3,13 @@ import { DEMO_BOOKINGS_COOKIE, type StoredDemoBooking } from "@/lib/demoBookings
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { checkTrailerAvailability } from "@/lib/availability";
+import { seedLogisticsForConfirmedBooking } from "@/lib/logistics";
+
+const OWNER_SELF_SERVICE_PAYOUT_CENTS = 35000;
+const DRIVER_TRIP_FEE_CENTS = 4000;
+const DEFAULT_DRIVER_TRIPS = 2; // delivery + pickup
+
+type TransportProvider = "OWNER" | "DRIVER_MARKETPLACE" | "CUSTOMER_PICKUP";
 
 /**
  * POST /api/checkout
@@ -30,6 +37,8 @@ export async function POST(request: NextRequest) {
     deliveryWindow,
     materialType,
     loads,
+    transportProvider,
+    tripCount,
   } = body as {
     trailerName: string;
     trailerSize: string;
@@ -47,72 +56,141 @@ export async function POST(request: NextRequest) {
     deliveryWindow?: string;
     materialType?: string;
     loads?: string;
+    transportProvider?: TransportProvider;
+    tripCount?: number;
   };
+
+  const selectedTransport: TransportProvider = transportProvider ?? "DRIVER_MARKETPLACE";
+  if (selectedTransport === "CUSTOMER_PICKUP") {
+    return NextResponse.json(
+      {
+        error:
+          "Customer pickup is not allowed. Only authorized drivers or the trailer owner can handle pickup and return.",
+      },
+      { status: 422 }
+    );
+  }
+  const effectiveTripCount = Math.max(1, tripCount ?? DEFAULT_DRIVER_TRIPS);
+  const ownerServicePayout =
+    selectedTransport === "OWNER" ? OWNER_SELF_SERVICE_PAYOUT_CENTS : 0;
+  const driverServiceCost =
+    selectedTransport === "DRIVER_MARKETPLACE"
+      ? effectiveTripCount * DRIVER_TRIP_FEE_CENTS
+      : 0;
+  const logisticsSummary = `provider=${selectedTransport}; trips=${effectiveTripCount}; ownerPayoutCents=${ownerServicePayout}; driverCostCents=${driverServiceCost}`;
 
   const origin = request.headers.get("origin") ?? "http://localhost:3000";
   const successUrl = `${origin}/booking/success?session_id={CHECKOUT_SESSION_ID}`;
   const finalCancelUrl = cancelUrl ?? `${origin}/services/dump-trailer`;
 
-  // ── Tentar integração com Prisma (quando trailerId disponível) ──────────
+  // ── Tentar integração com Prisma (booking real no banco) ──────────
   let prismaBookingId: string | null = null;
 
-  if (trailerId) {
-    try {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      if (user) {
-        const serviceDate = new Date(deliveryDate);
-        const pickupDateObj = pickupDate ? new Date(pickupDate) : new Date(serviceDate.getTime() + days * 86400000);
+    if (user?.email) {
+      const serviceDate = new Date(deliveryDate);
+      const pickupDateObj = pickupDate
+        ? new Date(pickupDate)
+        : new Date(serviceDate.getTime() + days * 86400000);
 
-        const customerProfile = await prisma.customerProfile.findFirst({
-          where: { user: { email: user.email ?? "" } },
-          select: { id: true },
-        });
-
-        if (customerProfile) {
-          const { available, conflictingBookingIds, conflictingBlockIds } =
-            await checkTrailerAvailability(trailerId, serviceDate, pickupDateObj);
-
-          if (!available) {
-            return NextResponse.json(
-              {
-                error: "Trailer not available for the selected dates",
-                conflicts: { bookings: conflictingBookingIds, blocks: conflictingBlockIds },
+      // Resolve trailer by:
+      // 1) exact Prisma id, 2) name/size similarity, 3) first online trailer.
+      const trailerRecord =
+        (trailerId
+          ? await prisma.trailer.findUnique({
+              where: { id: trailerId },
+              select: { id: true, name: true, size: true },
+            })
+          : null) ??
+        (trailerName || trailerSize
+          ? await prisma.trailer.findFirst({
+              where: {
+                OR: [
+                  ...(trailerName
+                    ? [{ name: { contains: trailerName, mode: "insensitive" as const } }]
+                    : []),
+                  ...(trailerSize
+                    ? [{ size: { contains: trailerSize, mode: "insensitive" as const } }]
+                    : []),
+                ],
               },
-              { status: 409 }
-            );
-          }
+              orderBy: { createdAt: "asc" },
+              select: { id: true, name: true, size: true },
+            })
+          : null) ??
+        (await prisma.trailer.findFirst({
+          orderBy: { createdAt: "asc" },
+          select: { id: true, name: true, size: true },
+        }));
 
-          const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-
-          const booking = await prisma.booking.create({
-            data: {
-              customerId: customerProfile.id,
-              trailerId,
-              status: "PENDING",
-              deliveryAddress: address ?? "",
-              serviceDate,
-              pickupDate: pickupDateObj,
-              deliveryWindow: deliveryWindow ?? "afternoon",
-              materialType: materialType ?? "other",
-              loads: loads ?? String(days),
-              totalAmount: totalCents,
-              notes,
-              expiresAt,
-              payment: {
-                create: { amount: totalCents, status: "PENDING" },
-              },
-            },
-            select: { id: true },
-          });
-
-          prismaBookingId = booking.id;
-        }
+      if (!trailerRecord) {
+        return NextResponse.json({ error: "No trailer available for online booking" }, { status: 404 });
       }
-    } catch {
-      // Falha silenciosa — continua com modo demo
+
+      const appUser = await prisma.user.upsert({
+        where: { email: user.email },
+        update: {},
+        create: {
+          email: user.email,
+          status: "ACTIVE",
+          role: "CUSTOMER",
+          phone: String(user.user_metadata?.phone ?? "") || null,
+        },
+        select: { id: true },
+      });
+
+      const customerProfile = await prisma.customerProfile.upsert({
+        where: { userId: appUser.id },
+        update: {},
+        create: { userId: appUser.id, preferredAddress: address ?? city ?? null },
+        select: { id: true },
+      });
+
+      const { available, conflictingBookingIds, conflictingBlockIds } =
+        await checkTrailerAvailability(trailerRecord.id, serviceDate, pickupDateObj);
+
+      if (!available) {
+        return NextResponse.json(
+          {
+            error: "Trailer not available for the selected dates",
+            conflicts: { bookings: conflictingBookingIds, blocks: conflictingBlockIds },
+          },
+          { status: 409 }
+        );
+      }
+
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      const booking = await prisma.booking.create({
+        data: {
+          customerId: customerProfile.id,
+          trailerId: trailerRecord.id,
+          status: "PENDING",
+          deliveryAddress: address ?? "",
+          serviceDate,
+          pickupDate: pickupDateObj,
+          deliveryWindow: deliveryWindow ?? "afternoon",
+          materialType: materialType ?? "other",
+          loads: loads ?? String(days),
+          totalAmount: totalCents,
+          notes: [notes, `[logistics] ${logisticsSummary}`].filter(Boolean).join("\n"),
+          expiresAt,
+          payment: {
+            create: { amount: totalCents, status: "PENDING" },
+          },
+        },
+        select: { id: true },
+      });
+
+      prismaBookingId = booking.id;
     }
+  } catch {
+    // Falha silenciosa — continua com modo demo
   }
 
   // ── Helpers para cookie demo ──────────────────────────────────────────
@@ -178,17 +256,18 @@ export async function POST(request: NextRequest) {
 
     // Se temos booking no DB, marca como paid imediatamente no demo
     if (prismaBookingId) {
-      prisma.payment
-        .update({
-          where: { bookingId: prismaBookingId },
-          data: { status: "PAID", paidAt: new Date() },
-        })
-        .then(() =>
+      prisma
+        .$transaction([
+          prisma.payment.update({
+            where: { bookingId: prismaBookingId },
+            data: { status: "PAID", paidAt: new Date() },
+          }),
           prisma.booking.update({
-            where: { id: prismaBookingId! },
+            where: { id: prismaBookingId },
             data: { status: "CONFIRMED", expiresAt: null },
-          })
-        )
+          }),
+        ])
+        .then(() => seedLogisticsForConfirmedBooking(prismaBookingId))
         .catch(() => {});
     }
 
@@ -226,6 +305,10 @@ export async function POST(request: NextRequest) {
         pickupDate,
         days: String(days),
         bookingId: prismaBookingId ?? "",
+        transportProvider: selectedTransport,
+        tripCount: String(effectiveTripCount),
+        ownerServicePayoutCents: String(ownerServicePayout),
+        driverServiceCostCents: String(driverServiceCost),
       },
       success_url: successUrl,
       cancel_url: finalCancelUrl,

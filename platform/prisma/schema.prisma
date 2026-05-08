@@ -57,6 +57,29 @@ enum OperationalEventType {
   RETURN
 }
 
+enum TrailerLocationType {
+  DEPOT
+  CUSTOMER_SITE
+  DISPOSAL_SITE
+  IN_TRANSIT
+  UNKNOWN
+}
+
+enum LogisticsOrderType {
+  PICKUP
+  DISPOSAL
+  DROPOFF
+  REPOSITION
+}
+
+enum LogisticsOrderStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 // ─────────────────────────────────────────────
 // Modelos
 // ─────────────────────────────────────────────
@@ -115,30 +138,42 @@ model DriverProfile {
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   bookings         Booking[]
   operationalEvents OperationalEvent[]
+  logisticsOrders  LogisticsOrder[]
 
   @@map("driver_profiles")
 }
 
 model Trailer {
-  id             String        @id @default(cuid())
-  ownerId        String
-  name           String
-  slug           String        @unique
-  size           String
-  capacity       String
-  gvwr           String
-  payload        String
-  pricePerPeriod Int           // em centavos (USD)
-  status         TrailerStatus @default(AVAILABLE)
-  images         String[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                    String        @id @default(cuid())
+  ownerId               String
+  name                  String
+  slug                  String        @unique
+  size                  String
+  capacity              String
+  gvwr                  String
+  payload               String
+  pricePerPeriod        Int           // em centavos (USD)
+  status                TrailerStatus @default(AVAILABLE)
+  /// Quando false, o trailer NÃO aparece em listagens públicas
+  /// e /api/checkout rejeita reservas online com 409.
+  /// Owner usa este toggle para alugar fora da plataforma temporariamente.
+  onlineBookingEnabled  Boolean       @default(true)
+  currentLocationType   TrailerLocationType @default(DEPOT)
+  currentLocationLabel  String?
+  currentLocationRefId  String?
+  currentLocationAt     DateTime?
+  images                String[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   owner        OwnerProfile          @relation(fields: [ownerId], references: [id])
   bookings     Booking[]
+  logisticsOrders LogisticsOrder[]
   availability TrailerAvailability[]
 
   @@index([status])
+  @@index([onlineBookingEnabled])
+  @@index([currentLocationType])
   @@map("trailers")
 }
 
@@ -179,6 +214,7 @@ model Booking {
   driver            DriverProfile?     @relation(fields: [driverId], references: [id])
   payment           Payment?
   operationalEvents OperationalEvent[]
+  logisticsOrders   LogisticsOrder[]
   review            Review?
   auditLogs         AuditLog[]         @relation("BookingAuditLogs")
 
@@ -221,6 +257,39 @@ model OperationalEvent {
   driver  DriverProfile @relation(fields: [driverId], references: [id])
 
   @@map("operational_events")
+}
+
+model LogisticsOrder {
+  id                 String               @id @default(cuid())
+  trailerId          String
+  bookingId          String?
+  driverId           String?
+  type               LogisticsOrderType
+  status             LogisticsOrderStatus @default(PENDING)
+  sequence           Int                  @default(0)
+  fromLocationType   TrailerLocationType  @default(UNKNOWN)
+  fromLocationLabel  String?
+  toLocationType     TrailerLocationType
+  toLocationLabel    String
+  wasteDropLocation  String?
+  nextStopLocation   String?
+  autoPlanned        Boolean              @default(true)
+  requiresPickupTeam Boolean              @default(false)
+  scheduledAt        DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  notes              String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  trailer Trailer        @relation(fields: [trailerId], references: [id], onDelete: Cascade)
+  booking Booking?       @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  driver  DriverProfile? @relation(fields: [driverId], references: [id], onDelete: SetNull)
+
+  @@index([trailerId, status, scheduledAt])
+  @@index([bookingId, sequence])
+  @@index([driverId, status])
+  @@map("logistics_orders")
 }
 
 model Review {

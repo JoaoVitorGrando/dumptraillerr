@@ -95,6 +95,14 @@
   background-size: 40px 40px;
 }
 
+/* Padrão de grade cinza para superfícies claras */
+.bg-grid-gray {
+  background-color: #3f3f3f;
+  background-image: linear-gradient(rgba(104, 94, 81, 0.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(104, 94, 81, 0.28) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
 /* Hazard stripes — faixa decorativa em seções hero/CTA */
 .bg-hazard-stripes {
   background-image: repeating-linear-gradient(

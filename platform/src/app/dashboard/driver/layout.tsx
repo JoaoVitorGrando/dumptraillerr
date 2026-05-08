@@ -11,12 +11,20 @@ export default async function DriverDashboardLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const userName = String(user?.user_metadata?.full_name ?? "")
+    .trim()
+    .split(" ")[0];
 
   // Demo: today's jobs count as a notification badge
   const alertCount = DEMO_JOBS.length;
 
   return (
-    <DashboardShell role="driver" alertCount={alertCount} userEmail={user?.email ?? undefined}>
+    <DashboardShell
+      role="driver"
+      alertCount={alertCount}
+      userEmail={user?.email ?? undefined}
+      userName={userName || undefined}
+    >
       {children}
     </DashboardShell>
   );

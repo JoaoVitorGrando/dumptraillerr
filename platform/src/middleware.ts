@@ -19,6 +19,14 @@ function getRoleHome(role: UserRole) {
  * Roda em todas as rotas configuradas no matcher abaixo.
  */
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  // Admin API routes validate auth/role in their own handlers.
+  // Skipping middleware auth avoids duplicate Supabase round-trips per action.
+  if (path.startsWith("/api/admin/")) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -46,8 +54,6 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const path = request.nextUrl.pathname;
 
   // Rotas protegidas — redireciona para login se não autenticado
   const protectedPrefixes = [

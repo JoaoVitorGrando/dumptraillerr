@@ -1,218 +1,215 @@
 # FAGU · Trailer Rental Platform
 
-Landing/booking site da **FAGU Home Services & Logistics** — uma plataforma
-multi-categoria de aluguel de trailers focada em conectar clientes a trailers
-para qualquer trabalho (telhados, demolição, mudanças, transporte etc).
-
-> **Status atual (MVP):** apenas **Dump Trailer** está liberado publicamente.
-> A arquitetura já contempla 11 categorias e basta virar uma flag para
-> liberar as demais quando o negócio estiver pronto.
+> **Status:** MVP em produção · Seattle, WA · 2026
+> **Stack:** Next.js 15 · TypeScript · Supabase (Postgres) · Prisma · Stripe · Tailwind
 
 ---
 
-## 1. Objetivos do produto
+## 1. O que é
 
-Definidos pelo cliente (Fabrício / FAGU):
+FAGU é uma plataforma multi-papel de aluguel de trailers para o mercado de Seattle. Conecta:
 
-1. **Manter a estrutura para todos os tipos de trailer** — enclosed, flatbed,
-   utility, car hauler, cargo, box, motorcycle, horse, tow, boat. Não vamos
-   refatorar quando crescer; só ligar.
-2. **Liberar agora apenas Dump Trailer.** É o foco comercial da fase atual.
-3. **Permitir customização de tamanho e capacidade.** O cliente pode escolher
-   entre os modelos prontos ou pedir um trailer customizado informando
-   modelo, dimensões, altura lateral e capacidade.
-4. **Cobrir vários modelos dentro de Dump Trailer:** 5 modelos com tamanhos
-   (12 a 20 ft), alturas laterais (2 ft / 4 ft) e capacidades distintas.
-5. **Conversão antes de tudo:** booking online, day-before delivery, pickup
-   incluso, pré-pagamento via Stripe e captura de leads via GoHighLevel.
+- **Customers** — alugam trailers (foco MVP: dump trailers para construção, jardinagem, limpeza).
+- **Owners (dealers)** — donos de trailers que cadastram a frota e ganham por aluguel.
+- **Drivers** — motoristas FAGU que entregam e retiram trailers.
+- **Admin** — operação interna que monitora bookings, frota, pagamentos e aprovações.
 
----
+Reservas são instantâneas: o cliente escolhe trailer e datas, o sistema confere disponibilidade em transação, e o pagamento é capturado via Stripe Checkout antes da confirmação. Webhook do Stripe muda o booking de `PENDING` para `CONFIRMED`.
 
-## 2. O que está liberado hoje
+## 2. Estrutura do repositório
 
-| Área                          | Status                                  |
-| ----------------------------- | --------------------------------------- |
-| Dump Trailer (12-20 ft)       | ✅ Bookable online                      |
-| Custom Dump Trailer           | ✅ Cliente pede tamanho/capacidade      |
-| Outras 10 categorias          | ⏳ Estrutura pronta, escondidas via flag |
-| Webhooks GHL (leads)          | ✅ Plug-and-play via `.env`             |
-| Pagamento Stripe              | ⏳ Página simulada, pronta para integrar |
+```
+.
+├── platform/                  # APP de produção (Next.js + Prisma)
+│   ├── prisma/                # schema + migrations + seed
+│   ├── public/                # assets estáticos
+│   ├── src/
+│   │   ├── app/               # rotas (App Router)
+│   │   │   ├── admin/         # painel admin (RBAC: ADMIN)
+│   │   │   ├── dashboard/     # painéis customer/owner/driver
+│   │   │   ├── api/           # endpoints (admin, owner, checkout, webhooks)
+│   │   │   ├── auth/          # login, signup, callback, signout
+│   │   │   └── (públicas)     # landing, services, partner, faq, contact
+│   │   ├── components/        # UI compartilhada (Header, Hero, BookingForm, Shells)
+│   │   ├── data/              # catálogos estáticos (services, trailers, demo)
+│   │   ├── lib/               # adapters: prisma, supabase, availability, auth admin
+│   │   ├── middleware.ts      # auth + RBAC por rota
+│   │   └── types/             # tipos TS compartilhados
+│   ├── tailwind.config.ts
+│   └── package.json
+├── docs/                      # documentação técnica e operacional
+│   ├── ARCHITECTURE.md
+│   ├── DATA_MODEL.md          # (planejado)
+│   ├── RUNBOOK.md             # (planejado)
+│   └── BOOKING_FLOW.md        # (planejado)
+├── README.md                  # este arquivo
+├── planoimplementação.md      # roadmap de produto
+└── documento-implementacao-admin.md
+```
 
----
+## 3. Pré-requisitos
 
-## 3. Modelos de Dump Trailer disponíveis
+- **Node.js** 20+
+- **npm** 10+
+- Conta **Supabase** (Postgres gerenciado + Auth)
+- Conta **Stripe** (modo teste para dev, live para produção)
+- (Opcional) **GoHighLevel** para captura de leads
 
-Definidos em [`src/data/trailers.js`](./src/data/trailers.js):
-
-| Modelo                | Tamanho   | Altura | Capacidade (4 ft sides) | GVWR        |
-| --------------------- | --------- | ------ | ----------------------- | ----------- |
-| Compact               | 12 × 7 ft | 4 ft   | 12.1 yd³                | 9,990 lbs   |
-| Standard              | 14 × 7 ft | 4 ft   | 14.4 yd³                | 14,000 lbs  |
-| Pro                   | 16 × 7 ft | 4 ft   | 16.4 yd³                | 14,000 lbs  |
-| Heavy Duty            | 18 × 7 ft | 4 ft   | 18.5 yd³                | 17,600 lbs  |
-| Commercial            | 20 × 8 ft | 4 ft   | 20.7 yd³                | 25,000 lbs  |
-| **Custom (qualquer)** | A pedido  | A pedido | A pedido              | A pedido    |
-
-A opção "Custom" abre os campos extras no formulário de booking (modelo,
-size, side height, capacidade) e é validada antes do submit.
-
----
-
-## 4. Regras de preço
-
-- **First trailer:** $350
-- **Second trailer (mesmo job site):** 50% off → $175
-- Reservas são confirmadas apenas após pré-pagamento.
-- Disposal/dump fees **não** estão inclusos no preço de aluguel.
-
----
-
-## 5. Stack
-
-### Landing page (estado atual — Vite)
-- **React 19** + **Vite** (SPA com React Router)
-- **TailwindCSS 3** com tema FAGU (paleta + tipografia)
-- Fonte: Bebas Neue (display) + Inter (body)
-- Lead capture: **GoHighLevel** webhooks (um por formulário)
-- Pagamentos: **Stripe Checkout** (demo mode — integração pendente)
-
-### Plataforma completa (stack de destino — Next.js)
-- **Next.js 15 + TypeScript** — base fullstack com App Router, SSR e Server Actions
-- **Supabase PostgreSQL** — banco relacional com RLS por perfil
-- **Prisma** — ORM com migrations tipadas
-- **Supabase Auth + Storage** — autenticação e upload de documentos/evidências
-- **Stripe Checkout + Webhooks** — cobrança antecipada e conciliação
-- **GoHighLevel API + Webhooks** — CRM, pipeline e comunicação automatizada
-- **Mapbox / Google Maps** — geocodificação e contexto de rota
-- **Vercel + Sentry** — deploy contínuo e monitoramento de erros
-
-> A migração da landing page Vite → Next.js está detalhada na Fase 2 do plano de implementação.
-
----
-
-## 6. Scripts
+## 4. Como rodar local
 
 ```bash
-npm install     # instala dependências
-npm run dev     # dev server (http://localhost:5173)
-npm run build   # build de produção em ./dist
-npm run preview # preview do build local
+cd platform
+
+# 1. Instalar dependências
+npm install
+
+# 2. Configurar variáveis de ambiente
+cp ../.env.example .env.local
+# edite .env.local com suas chaves
+
+# 3. Aplicar schema no banco
+npx prisma migrate dev
+
+# 4. Gerar Prisma Client
+npx prisma generate
+
+# 5. (Opcional) Popular dados demo
+npx prisma db seed
+
+# 6. Subir servidor
+npm run dev
 ```
+
+App em `http://localhost:3000`.
+
+## 5. Variáveis de ambiente essenciais
+
+| Var | Quem usa | Obrigatória |
+|---|---|---|
+| `DATABASE_URL` | Prisma client (pooler Supabase) | ✅ |
+| `DIRECT_URL` | Prisma migrate (direta, sem pooler) | ✅ |
+| `NEXT_PUBLIC_SUPABASE_URL` | Auth client + server | ✅ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Auth client | ✅ |
+| `SUPABASE_SERVICE_ROLE_KEY` | Operações admin (server-only) | ✅ |
+| `STRIPE_SECRET_KEY` | API de checkout | ✅ produção |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe.js no client | ✅ produção |
+| `STRIPE_WEBHOOK_SECRET` | Validar webhook `checkout.session.completed` | ✅ produção |
+| `NEXT_PUBLIC_GHL_*_WEBHOOK` | Disparar leads para GoHighLevel | opcional |
+| `NEXT_PUBLIC_MAPS_KEY` | Geocoding/autocomplete de endereço | opcional |
+| `SENTRY_DSN` | Monitoramento de erros | recomendado em produção |
+| `NEXT_PUBLIC_CONTACT_PHONE` / `EMAIL` / `HOURS` | Footer e contato | recomendado |
+
+> **Dica:** o sistema funciona em "modo demo" sem `STRIPE_SECRET_KEY` (cria booking direto como `CONFIRMED` para QA visual). Em produção é obrigatório.
+
+## 6. Comandos úteis
+
+```bash
+# Dev
+npm run dev                    # servidor local com hot reload
+
+# Banco
+npx prisma migrate dev         # cria migration + aplica
+npx prisma migrate deploy      # aplica migrations em produção
+npx prisma studio              # GUI para inspecionar dados
+npx prisma db seed             # popula dados de exemplo
+
+# Build & lint
+npm run build                  # build de produção (inclui prisma generate)
+npm run start                  # serve build de produção
+npm run lint                   # ESLint
+npm run format                 # Prettier write
+npm run format:check           # Prettier check (CI)
+
+# Type check (sem build)
+npx tsc --noEmit -p tsconfig.json
+```
+
+## 7. Deploy
+
+**Recomendado: Vercel + Supabase**
+
+1. Conecte o repositório no Vercel apontando para `platform/` como root.
+2. Configure todas as env vars da Seção 5 no painel do Vercel.
+3. Configure o webhook do Stripe apontando para `https://SEU_DOMINIO/api/webhooks/stripe`.
+4. Rode `npx prisma migrate deploy` antes do primeiro deploy (uma vez, no Supabase).
+5. Habilite preview deploys para PRs (cada PR sobe um ambiente isolado).
+
+**Setup Stripe:**
+
+- Webhook eventos: `checkout.session.completed`, `payment_intent.payment_failed`.
+- Endpoint: `POST /api/webhooks/stripe`.
+- Copie o signing secret para `STRIPE_WEBHOOK_SECRET`.
+
+## 8. Papéis e permissões
+
+| Papel | Pode |
+|---|---|
+| `customer` | Reservar trailer, ver histórico, perfil |
+| `owner` | Cadastrar trailer, definir disponibilidade, ver receita, **ligar/desligar reserva online por trailer** |
+| `driver` | Ver jobs do dia, registrar entrega/retirada, histórico, ganhos |
+| `admin` | Visão global: bookings, frota, usuários, pagamentos, audit log, aprovações |
+
+Aplicação do RBAC:
+
+- **Middleware** (`src/middleware.ts`) — bloqueia rotas por papel antes de chegar na page.
+- **Server Components** — checagem dupla via `createClient()` do Supabase + `user.user_metadata.role`.
+- **API routes admin** — `requireAdmin()` em `lib/adminAuth.ts` rejeita não-admins com 403.
+- **Queries** — sempre filtradas por `userId` no servidor; nunca confiar em params do client.
+
+## 9. Fluxo de booking (resumo)
+
+```
+Customer escolhe trailer + data
+  └─> POST /api/checkout
+        ├─ valida onlineBookingEnabled = true
+        ├─ checkTrailerAvailability() em transação
+        ├─ cria Booking PENDING + Payment PENDING (TTL 15min)
+        └─ abre Stripe Checkout Session
+              └─> Stripe redireciona para success_url
+                    └─> webhook /api/webhooks/stripe (checkout.session.completed)
+                          ├─ Payment → PAID
+                          └─ Booking → CONFIRMED, expiresAt = null
+
+Job de expiração (cron):
+  └─ Bookings PENDING vencidos → CANCELLED + libera disponibilidade
+```
+
+Detalhes em `docs/BOOKING_FLOW.md`.
+
+## 10. Owner toggle de reserva online
+
+Cada trailer tem o flag `onlineBookingEnabled`. Quando o owner desliga:
+
+- Trailer **some** das listagens públicas (`/services/dump-trailer`).
+- `/api/checkout` rejeita reservas com erro 409 "Trailer not bookable online".
+- Trailer continua aparecendo no `My Fleet` do owner (com indicador OFF).
+- Bookings já confirmadas **não são canceladas** — só novas ficam bloqueadas.
+
+Use case: owner quer alugar fora da plataforma temporariamente, evitando taxa, mantendo o trailer no inventário.
+
+## 11. Escalabilidade — pontos sensíveis
+
+- **Disponibilidade** — sempre calcular dentro de `prisma.$transaction()`. Existe índice composto em `Booking(trailerId, serviceDate, status)` e em `TrailerAvailability(trailerId, blockedFrom, blockedUntil)`.
+- **Imagens** — hospedar em CDN (S3 + CloudFront ou Supabase Storage). Não servir do Postgres.
+- **Webhook Stripe** — operações idempotentes via `stripeCheckoutSessionId @unique`. Rejeitar duplicatas.
+- **Sessions Supabase** — pooler em modo *transaction*, conexões diretas só para migrate.
+- **Audit log** — particionar por mês quando ultrapassar 1M de linhas.
+- **Cron** — `expireStaleBookings()` deve rodar a cada minuto via Vercel Cron ou Supabase Edge Function.
+- **Rate limiting** — adicionar middleware (Upstash) em `/api/checkout` antes de promoção.
+
+## 12. Roadmap próximo
+
+- [ ] Cron job de expiração de bookings PENDING (Vercel Cron)
+- [ ] Notificações por e-mail (Resend) — confirmation, reminders, cancelamentos
+- [ ] App mobile do driver (PWA)
+- [ ] Integração Twilio para SMS no day-of-delivery
+- [ ] BI: cohort de retenção, LTV, ocupação por região
+- [ ] Liberar mais 10 categorias de trailer (já estruturadas, atrás da flag `SHOW_ONLY_DUMP_TRAILERS`)
+
+## 13. Contato técnico
+
+Para dúvidas operacionais ou bugs em produção, abra issue no repositório ou contate o time de engenharia FAGU.
 
 ---
 
-## 7. Estrutura de pastas
-
-```
-src/
-├── main.jsx                     # entry + react-router (rotas SPA)
-├── App.jsx                      # (não usado — usamos pages/)
-├── index.css                    # Tailwind layers + estilos globais
-│
-├── pages/                       # rotas top-level
-│   ├── HomePage.jsx             # /
-│   ├── ServicePage.jsx          # /services/:slug (genérico)
-│   ├── DumpTrailerPage.jsx      # /services/dump-trailer (página rica)
-│   ├── PartnerPage.jsx          # /partner, /partner/:role
-│   ├── FAQPage.jsx              # /faq
-│   └── ContactPage.jsx          # /contact
-│
-├── components/
-│   ├── Header.jsx               # nav fixo + drawer mobile
-│   ├── Hero.jsx                 # hero da home com carrossel de fotos
-│   ├── ServicesCarousel.jsx     # vitrine de categorias (apenas DT no MVP)
-│   ├── Trailers.jsx             # seletor de modelos + custom CTA
-│   ├── TrailerCard.jsx          # card de modelo individual
-│   ├── BookingForm.jsx          # form + validação + opção custom
-│   ├── Benefits.jsx, HowItWorks.jsx, Rules.jsx, FAQ.jsx, FinalCTA.jsx
-│   ├── Partner.jsx, PartnerTeaser.jsx
-│   ├── Payment.jsx              # placeholder de Stripe
-│   └── Footer.jsx, FaguBadge.jsx
-│
-├── data/
-│   ├── services.js              # 11 categorias + flag SHOW_ONLY_DUMP_TRAILERS
-│   └── trailers.js              # 5 modelos de dump trailer (specs completas)
-│
-├── services/
-│   └── leads.js                 # submitLead() → GHL webhook por formType
-│
-├── config/
-│   └── api.js                   # API_CONFIG: GHL, Stripe, Google Maps, contato
-│
-└── assets/                      # fotos (.webp/.jpg) + logos
-```
-
----
-
-## 8. Launch gate (liberar outros trailers)
-
-A flag fica em [`src/data/services.js`](./src/data/services.js):
-
-```js
-export const SHOW_ONLY_DUMP_TRAILERS = true; // MVP: só dump trailer
-// → mude para `false` para exibir as 11 categorias publicamente
-```
-
-Quando `true`:
-- Home mostra apenas o card de Dump Trailer + aviso "Coming soon".
-- `/services/:slug` só aceita slugs públicos (rota redireciona para `/`).
-- `Hero` segue rotacionando todas as fotos para reforçar a visão multi-categoria.
-
-Quando `false`:
-- Carrossel completo, todas as rotas `/services/:slug` ativas, links de
-  waitlist em vez de booking nas categorias ainda não bookáveis.
-
----
-
-## 9. Fluxo de leads
-
-Tudo passa por `submitLead(formType, data)` em
-[`src/services/leads.js`](./src/services/leads.js):
-
-| `formType`         | Origem                              | Webhook env var               |
-| ------------------ | ----------------------------------- | ----------------------------- |
-| `booking`          | Booking de Dump Trailer             | `VITE_GHL_BOOKING_WEBHOOK`    |
-| `owner_signup`     | Cadastro de owners (Partner)        | `VITE_GHL_OWNER_WEBHOOK`      |
-| `customer_signup`  | Waitlist de outros trailers/clientes | `VITE_GHL_CUSTOMER_WEBHOOK`   |
-| `driver_signup`    | Cadastro de motoristas              | `VITE_GHL_DRIVER_WEBHOOK`     |
-| `contact`          | Formulário de contato genérico      | `VITE_GHL_CONTACT_WEBHOOK`    |
-
-Sem `.env` configurado, o site roda em **demo mode**: tudo flui na UI, mas
-nada vai para o GHL. Útil para preview de design/QA.
-
-`.env.example`:
-
-```
-VITE_GHL_BOOKING_WEBHOOK=
-VITE_GHL_OWNER_WEBHOOK=
-VITE_GHL_CUSTOMER_WEBHOOK=
-VITE_GHL_DRIVER_WEBHOOK=
-VITE_GHL_CONTACT_WEBHOOK=
-VITE_STRIPE_PUBLISHABLE_KEY=
-VITE_STRIPE_CHECKOUT_ENDPOINT=
-VITE_GOOGLE_MAPS_KEY=
-VITE_CONTACT_PHONE=
-VITE_CONTACT_EMAIL=
-VITE_CONTACT_HOURS=
-```
-
----
-
-## 10. Identidade visual (resumo)
-
-- **Fluxo (laranja claro)** `#EB7231` — accent primário, badges, hover
-- **Fundamento (laranja escuro)** `#D75227` — títulos de seção, hover forte
-- **Autoridade (cinza escuro)** `#3E3E3E` — fundos hero, painel de specs
-- **Bege/Off-white** — backgrounds suaves
-- Detalhes hazard-stripe pretos/amarelos no hero para reforçar o universo
-  de construção.
-
-Tipografia: **Bebas Neue** (display, uppercase) + **Inter** (texto corrido).
-
----
-
-## 11. Roadmap
-
-O plano de implementação completo e detalhado está em [`planoimplementação.md`](./planoimplementação.md).
-
-Esse arquivo é a fonte de verdade para todas as decisões de desenvolvimento — 13 fases desde a fundação técnica até o go-live. Sempre consulte e atualize ele à medida que o projeto avança.
+© 2026 FAGU Home Services & Logistics — Seattle, WA

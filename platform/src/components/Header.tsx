@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import FaguBadge from "@/components/FaguBadge";
 import { PUBLIC_SERVICES } from "@/data/services";
 import { createClient } from "@/lib/supabase/client";
@@ -24,39 +24,21 @@ function normalizeRole(value: unknown): UserRole {
   return "customer";
 }
 
-function getRoleHome(role: UserRole) {
-  if (role === "admin") return "/admin";
-  return `/dashboard/${role}`;
-}
-
 function getProfileLinks(role: UserRole) {
   if (role === "owner") {
-    return [
-      { href: "/dashboard/owner", label: "Dashboard" },
-      { href: "/dashboard/owner/fleet", label: "My Fleet" },
-      { href: "/dashboard/owner/earnings", label: "Earnings" },
-      { href: "/dashboard/owner/profile", label: "Profile" },
-    ];
+    return [{ href: "/dashboard/owner", label: "Dashboard" }];
   }
   if (role === "driver") {
-    return [
-      { href: "/dashboard/driver", label: "Dashboard" },
-      { href: "/dashboard/driver", label: "Today's Jobs" },
-      { href: "/dashboard/driver/earnings", label: "Earnings" },
-      { href: "/dashboard/driver/profile", label: "Profile" },
-    ];
+    return [{ href: "/dashboard/driver", label: "Dashboard" }];
   }
   if (role === "admin") {
     return [{ href: "/admin", label: "Admin Panel" }];
   }
-  return [
-    { href: "/dashboard/customer", label: "Dashboard" },
-    { href: "/dashboard/customer/bookings", label: "My Bookings" },
-    { href: "/dashboard/customer/profile", label: "Profile" },
-  ];
+  return [{ href: "/dashboard/customer", label: "Dashboard" }];
 }
 
 export default function Header() {
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
@@ -129,6 +111,11 @@ export default function Header() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!authChecked || !isAuthenticated || userRole !== "admin") return;
+    router.prefetch("/admin");
+  }, [authChecked, isAuthenticated, userRole, router]);
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300">

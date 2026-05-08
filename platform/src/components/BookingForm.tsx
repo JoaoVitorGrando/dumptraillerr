@@ -178,7 +178,8 @@ export default function BookingForm() {
 
     return {
       trailerName: customTrailer ? values.customTrailerModel : trailer?.name,
-      trailerSize: customTrailer ? values.customTrailerSize : trailer?.id,
+      trailerSize: customTrailer ? values.customTrailerSize : trailer?.size,
+      trailerId: customTrailer ? undefined : trailer?.id,
       trailerImage: trailer?.image,
       deliveryDate: values.serviceDate,
       pickupDate,
@@ -189,6 +190,11 @@ export default function BookingForm() {
       address: values.jobSiteAddress,
       city: values.jobSiteCity,
       notes: values.notes,
+      deliveryWindow: values.deliveryWindow,
+      materialType: values.materialType,
+      loads: values.loads === "custom" ? values.customLoads || "1" : values.loads,
+      transportProvider: "DRIVER_MARKETPLACE",
+      tripCount: 2,
       cancelUrl: window.location.href,
     };
   };
@@ -486,15 +492,26 @@ function Summary({ trailer, data }: { trailer: Trailer; data: FormData }) {
         <span className="h-2 w-2 mt-1 shrink-0 rounded-full bg-orange-400 animate-pulse" />
         <span>Status: reservation pending until our team confirms availability.</span>
       </div>
+      <div className="mt-2 flex items-start gap-2 text-[11px] sm:text-xs text-white/70">
+        <span className="h-2 w-2 mt-1 shrink-0 rounded-full bg-brand-yellow" />
+        <span>Pickup/return is handled only by authorized drivers or the trailer owner.</span>
+      </div>
     </div>
   );
 }
 
 function SummaryLine({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-white/10 pb-2">
-      <span className="text-white/70 text-xs sm:text-sm">{label}</span>
-      <span className={`font-bold text-right shrink-0 ${highlight ? "text-brand-yellow text-base sm:text-lg" : "text-white"}`}>{value}</span>
+    <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-2">
+      <span className="min-w-0 text-white/70 text-xs sm:text-sm">{label}</span>
+      <span
+        className={[
+          "min-w-0 max-w-[62%] whitespace-normal break-words text-right font-bold leading-tight",
+          highlight ? "text-brand-yellow text-base sm:text-lg" : "text-white",
+        ].join(" ")}
+      >
+        {value}
+      </span>
     </div>
   );
 }

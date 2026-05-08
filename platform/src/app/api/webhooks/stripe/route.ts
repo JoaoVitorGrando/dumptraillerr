@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { seedLogisticsForConfirmedBooking } from "@/lib/logistics";
 
 /**
  * POST /api/webhooks/stripe
@@ -94,6 +95,12 @@ async function handleCheckoutCompleted(
       data: { status: "CONFIRMED", expiresAt: null },
     }),
   ]);
+
+  try {
+    await seedLogisticsForConfirmedBooking(payment.bookingId);
+  } catch (err) {
+    console.warn("Could not seed logistics for booking:", payment.bookingId, err);
+  }
 
   console.warn("Booking confirmed:", payment.bookingId);
 }

@@ -36,6 +36,9 @@ function SignupForm() {
   const [step, setStep] = useState<1 | 2>(1);
   const [role, setRole] = useState<Role>("customer");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [vehicle, setVehicle] = useState("");
+  const [license, setLicense] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -59,6 +62,20 @@ function SignupForm() {
       setError("Passwords do not match.");
       return;
     }
+    if (role === "driver") {
+      if (!phone.trim()) {
+        setError("Phone is required for driver accounts.");
+        return;
+      }
+      if (!vehicle.trim()) {
+        setError("Vehicle information is required for driver accounts.");
+        return;
+      }
+      if (!license.trim()) {
+        setError("Driver license number is required for driver accounts.");
+        return;
+      }
+    }
 
     setLoading(true);
 
@@ -68,6 +85,9 @@ function SignupForm() {
       options: {
         data: {
           full_name: fullName.trim(),
+          phone: phone.trim(),
+          vehicle: role === "driver" ? vehicle.trim() : "",
+          license: role === "driver" ? license.trim() : "",
           role,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
@@ -259,6 +279,53 @@ function SignupForm() {
                 className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-brand-dark placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-colors"
               />
             </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-brand-dark uppercase tracking-wider mb-1.5">
+                Phone
+              </label>
+              <input
+                type="tel"
+                required={role === "driver"}
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1 (206) 555-0100"
+                className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-brand-dark placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-colors"
+              />
+            </div>
+
+            {role === "driver" && (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold text-brand-dark uppercase tracking-wider mb-1.5">
+                    Vehicle (Year, Make and Model)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={vehicle}
+                    onChange={(e) => setVehicle(e.target.value)}
+                    placeholder="Example: Ford F-250 2020"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-brand-dark placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-brand-dark uppercase tracking-wider mb-1.5">
+                    Driver License Number
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={license}
+                    onChange={(e) => setLicense(e.target.value)}
+                    placeholder="DL-12345678"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-brand-dark placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange transition-colors"
+                  />
+                </div>
+              </>
+            )}
 
             <div>
               <label className="block text-xs font-semibold text-brand-dark uppercase tracking-wider mb-1.5">

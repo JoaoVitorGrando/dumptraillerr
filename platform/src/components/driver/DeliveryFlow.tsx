@@ -6,20 +6,24 @@ import type { DemoJob } from "@/data/demo";
 
 interface Props {
   job: DemoJob;
+  autoNavigatePickup?: boolean;
 }
 
-type Step = 0 | 1 | 2 | 3; // 0=Pickup, 1=Drive, 2=Deliver+Photo, 3=Signature+Done
+type Step = 0 | 1 | 2 | 3; // 0=Pickup, 1=Transit, 2=Drop-off+Photo, 3=Close order
 
-const STEP_LABELS = ["Pickup", "En Route", "Deliver", "Complete"];
+const STEP_LABELS = ["Pickup", "Transit", "Drop-off", "Close Order"];
 const STEP_ICONS = ["🏠", "🚛", "📷", "✅"];
 
-export default function DeliveryFlow({ job }: Props) {
+export default function DeliveryFlow({ job, autoNavigatePickup = false }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
   const [photos, setPhotos] = useState<string[]>([]);
   const [signed, setSigned] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [orderActionPending, setOrderActionPending] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [pickupNavDone, setPickupNavDone] = useState(false);
 
   // Get GPS on mount
   useEffect(() => {
@@ -31,11 +35,56 @@ export default function DeliveryFlow({ job }: Props) {
     }
   }, []);
 
+  function openMapsRoute(location: string) {
+    const q = encodeURIComponent(location);
+    window.location.href = `https://maps.google.com/?q=${q}`;
+  }
+
+  useEffect(() => {
+    if (!autoNavigatePickup || pickupNavDone) return;
+    const pickupLocation = job.logistics?.fromLocation;
+    if (!pickupLocation) return;
+    setPickupNavDone(true);
+    openMapsRoute(pickupLocation);
+  }, [autoNavigatePickup, job.logistics?.fromLocation, pickupNavDone]);
+
+  async function updateLogisticsOrder(action: "start" | "complete") {
+    if (!job.logistics?.orderId) return;
+
+    setOrderError(null);
+    setOrderActionPending(true);
+    try {
+      const res = await fetch(`/api/driver/logistics-orders/${job.logistics.orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error ?? "Could not update logistics order.");
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not update logistics order.";
+      setOrderError(message);
+      throw err;
+    } finally {
+      setOrderActionPending(false);
+    }
+  }
+
   async function completeJob() {
     setCompleting(true);
-    // TODO: POST para Supabase — update job status, save photos + signature + GPS
-    await new Promise((r) => setTimeout(r, 1500));
-    router.push("/dashboard/driver");
+    try {
+      if (job.logistics?.orderId) {
+        await updateLogisticsOrder("complete");
+      } else {
+        // TODO: POST para Supabase — update job status, save photos + signature + GPS
+        await new Promise((r) => setTimeout(r, 700));
+      }
+      router.push("/dashboard/driver");
+    } finally {
+      setCompleting(false);
+    }
   }
 
   return (
@@ -82,6 +131,37 @@ export default function DeliveryFlow({ job }: Props) {
         {/* STEP 0 — Pickup confirmation */}
         {step === 0 && (
           <>
+            {job.logistics && (
+              <InfoCard title="Logistics Mission" icon="🧭">
+                <p className="text-xs text-brand-gray">Current order: {job.logistics.orderType}</p>
+                <p className="mt-1 text-sm font-semibold text-brand-dark">
+                  From: {job.logistics.fromLocation}
+                </p>
+                <p className="text-sm font-semibold text-brand-dark">
+                  To: {job.logistics.toLocation}
+                </p>
+                {job.logistics.wasteDropLocation && (
+                  <p className="text-xs text-brand-gray mt-2">
+                    Waste drop: {job.logistics.wasteDropLocation}
+                  </p>
+                )}
+                {job.logistics.nextOrderToLocation && (
+                  <p className="text-xs text-brand-gray">
+                    Next stop: {job.logistics.nextOrderToLocation}
+                  </p>
+                )}
+                {job.logistics.fromLocation && (
+                  <button
+                    type="button"
+                    onClick={() => openMapsRoute(job.logistics!.fromLocation!)}
+                    className="mt-3 inline-flex items-center gap-1.5 text-brand-orange text-sm font-semibold hover:underline"
+                  >
+                    Open trailer location in Maps ↗
+                  </button>
+                )}
+              </InfoCard>
+            )}
+
             <InfoCard title="Delivery Address" icon="📍">
               <p className="font-semibold text-brand-dark">{job.address}</p>
               <p className="text-brand-gray">{job.city}</p>
@@ -113,12 +193,26 @@ export default function DeliveryFlow({ job }: Props) {
               </InfoCard>
             )}
 
+            {orderError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {orderError}
+              </div>
+            )}
+
             <button
               type="button"
-              onClick={() => setStep(1)}
-              className="btn-primary w-full text-base py-4"
+              onClick={async () => {
+                if (job.logistics?.orderId) {
+                  await updateLogisticsOrder("start");
+                }
+                setStep(1);
+                const nextRoute = job.logistics?.toLocation || `${job.address} ${job.city}`;
+                openMapsRoute(nextRoute);
+              }}
+              disabled={orderActionPending}
+              className="btn-primary w-full text-base py-4 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Confirm Pickup → Start Driving
+              {orderActionPending ? "Starting logistics..." : "I arrived at trailer"}
             </button>
           </>
         )}
@@ -153,7 +247,7 @@ export default function DeliveryFlow({ job }: Props) {
               onClick={() => setStep(2)}
               className="btn-primary w-full text-base py-4"
             >
-              Arrived at Destination
+              I arrived at customer
             </button>
           </>
         )}

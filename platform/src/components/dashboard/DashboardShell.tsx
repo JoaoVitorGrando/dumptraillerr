@@ -111,15 +111,16 @@ const IconGear = (p: { className?: string }) => (
     <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
   </Icon>
 );
-const IconBell = (p: { className?: string }) => (
-  <Icon className={p.className}>
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9Z" />
-    <path d="M10 20a2 2 0 0 0 4 0" />
-  </Icon>
-);
 const IconChevron = (p: { className?: string }) => (
   <Icon className={p.className}>
     <path d="m6 9 6 6 6-6" />
+  </Icon>
+);
+const IconApp = (p: { className?: string }) => (
+  <Icon className={p.className}>
+    <rect x="7" y="2.5" width="10" height="19" rx="2.2" />
+    <path d="M10 5h4" />
+    <circle cx="12" cy="18.3" r="0.9" />
   </Icon>
 );
 const IconLogout = (p: { className?: string }) => (
@@ -277,20 +278,21 @@ const ROLE_CONFIG: Record<
   },
   driver: {
     homeHref: "/dashboard/driver",
-    homeLabel: "Today",
+    homeLabel: "Dashboard",
     eyebrow: "Driver App",
     pageTitles: {
       "/dashboard/driver": {
         title: "Today's Schedule",
-        subtitle: "Jobs assigned for today.",
+        subtitle:
+          "Assigned tasks for today. Review open deliveries on the map and accept your next run.",
       },
       "/dashboard/driver/history": {
         title: "History",
-        subtitle: "Every delivery you've completed.",
+        subtitle: "All deliveries you have completed.",
       },
       "/dashboard/driver/earnings": {
         title: "Earnings",
-        subtitle: "Daily, weekly and monthly pay.",
+        subtitle: "Track your daily, weekly, and monthly earnings.",
       },
       "/dashboard/driver/profile": {
         title: "Profile",
@@ -341,13 +343,14 @@ export interface DashboardShellProps {
   children: React.ReactNode;
   alertCount?: number;
   userEmail?: string;
+  userName?: string;
 }
 
 export default function DashboardShell({
   role,
   children,
-  alertCount = 0,
   userEmail,
+  userName,
 }: DashboardShellProps) {
   const pathname = usePathname() ?? "";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -355,15 +358,25 @@ export default function DashboardShell({
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const cfg = ROLE_CONFIG[role];
+  const isProfilePage = pathname.endsWith("/profile");
+  const isDriverHome = role === "driver" && pathname === "/dashboard/driver";
 
   /* derive title */
   const pageInfo = useMemo(() => {
     const direct = cfg.pageTitles[pathname];
-    if (direct) return direct;
+    if (direct) {
+      if (role === "driver" && pathname === "/dashboard/driver") {
+        return {
+          title: "",
+          subtitle: "Below are the deliveries available for today.",
+        };
+      }
+      return direct;
+    }
     const keys = Object.keys(cfg.pageTitles).sort((a, b) => b.length - a.length);
     const match = keys.find((k) => pathname.startsWith(k));
     return match ? cfg.pageTitles[match] : { title: "Dashboard", subtitle: "" };
-  }, [cfg, pathname]);
+  }, [cfg, pathname, role, userName]);
 
   const isOnHome = pathname === cfg.homeHref;
 
@@ -395,54 +408,73 @@ export default function DashboardShell({
   }, [pathname]);
 
   return (
-    <main className="flex-1 min-h-screen bg-gradient-to-b from-brand-light/60 via-white to-brand-light/40 pt-32 sm:pt-36 md:pt-40">
-      <div className="container-page pb-12 sm:pb-16 md:pb-20">
+    <main className="flex-1 bg-grid-gray pt-40 sm:pt-44 md:pt-48">
+      <div className="container-page pb-6 sm:pb-8 md:pb-10">
         {/* ===== Header card ===== */}
-        <div className="relative rounded-2xl border border-gray-200/80 bg-white shadow-sm overflow-visible">
-          <div className="h-1 w-full bg-gradient-to-r from-brand-orange via-brand-dark-orange to-brand-orange rounded-t-2xl" />
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 sm:px-7 py-5">
+        <div className="relative z-[1200] rounded-2xl border border-gray-200/80 bg-white shadow-sm overflow-visible">
+          <div
+            className={[
+              "gap-4 px-5 sm:px-7 py-5",
+              isDriverHome
+                ? "grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center"
+                : "flex flex-col sm:flex-row sm:items-center justify-between",
+            ].join(" ")}
+          >
+            {isDriverHome && <div className="hidden sm:block" />}
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-orange">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-orange" />
-                {cfg.eyebrow}
-              </div>
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-dark mt-1 truncate">
-                {pageInfo.title}
-              </h1>
-              {pageInfo.subtitle && (
-                <p className="text-sm text-brand-gray mt-0.5">{pageInfo.subtitle}</p>
+              {isDriverHome ? (
+                <div className="flex flex-col items-center text-center gap-y-1.5">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-orange">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-orange" />
+                    {cfg.eyebrow}
+                  </div>
+                  {pageInfo.title && (
+                    <h1 className="font-display text-xl sm:text-2xl font-bold text-brand-dark leading-tight">
+                      {pageInfo.title}
+                    </h1>
+                  )}
+                  {pageInfo.subtitle && (
+                    <p className="text-sm text-brand-gray leading-relaxed">
+                      {pageInfo.subtitle}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-orange">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-orange" />
+                    {cfg.eyebrow}
+                  </div>
+                  <h1
+                    className={[
+                      "font-display text-2xl sm:text-3xl font-bold text-brand-dark mt-1",
+                      role === "driver" ? "leading-tight" : "truncate",
+                    ].join(" ")}
+                  >
+                    {pageInfo.title}
+                  </h1>
+                  {pageInfo.subtitle && (
+                    <p
+                      className={[
+                        "text-sm text-brand-gray mt-0.5",
+                        role === "driver" ? "max-w-2xl leading-relaxed" : "",
+                      ].join(" ")}
+                    >
+                      {pageInfo.subtitle}
+                    </p>
+                  )}
+                </>
               )}
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Home / Dashboard quick button */}
+            <div className={["flex items-center gap-2 shrink-0", isDriverHome ? "justify-end" : ""].join(" ")}>
               <Link
-                href={cfg.homeHref}
-                aria-current={isOnHome ? "page" : undefined}
-                className={[
-                  "inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all duration-200",
-                  isOnHome
-                    ? "bg-brand-dark text-white shadow-sm"
-                    : "bg-brand-light/70 text-brand-dark hover:bg-brand-dark hover:text-white",
-                ].join(" ")}
+                href="/"
+                aria-label="Open app"
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold bg-brand-light/70 text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-200"
               >
-                <IconHome className="w-4 h-4" />
-                <span className="hidden sm:inline">{cfg.homeLabel}</span>
-              </Link>
-
-              {/* Notifications */}
-              <Link
-                href={cfg.notificationHref}
-                aria-label={`${alertCount} pending notifications`}
-                className="relative inline-flex items-center justify-center w-10 h-10 rounded-lg bg-brand-light/70 text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-200"
-              >
-                <IconBell className="w-4 h-4" />
-                {alertCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-orange text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-                    {alertCount > 99 ? "99+" : alertCount}
-                  </span>
-                )}
+                <IconApp className="w-4 h-4" />
+                <span className="hidden md:inline">App PWA</span>
               </Link>
 
               {/* Gear menu */}
@@ -479,7 +511,7 @@ export default function DashboardShell({
                     ref={menuRef}
                     role="menu"
                     aria-label="Dashboard functionalities"
-                    className="absolute right-0 mt-2 w-[min(340px,calc(100vw-2rem))] rounded-xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/[0.03] z-50 origin-top-right animate-[fadeSlide_140ms_ease-out]"
+                    className="absolute right-0 mt-2 w-[min(340px,calc(100vw-2rem))] rounded-xl border border-gray-200 bg-white shadow-2xl ring-1 ring-black/[0.03] z-[1300] origin-top-right animate-[fadeSlide_140ms_ease-out]"
                   >
                     <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-br from-brand-light/50 to-white rounded-t-xl">
                       <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-gray">
@@ -609,7 +641,12 @@ export default function DashboardShell({
           </div>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-gray-200/80 bg-white shadow-sm p-4 sm:p-6 md:p-8">
+        <div
+          className={[
+            "mt-5 rounded-2xl border border-gray-200/80 bg-white shadow-sm p-4 sm:p-6 md:p-8",
+            isProfilePage ? "mx-auto w-full max-w-2xl" : "",
+          ].join(" ")}
+        >
           {children}
         </div>
       </div>

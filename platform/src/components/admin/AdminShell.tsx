@@ -113,12 +113,6 @@ const IconGear = (p: { className?: string }) => (
     <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
   </Icon>
 );
-const IconBell = (p: { className?: string }) => (
-  <Icon className={p.className}>
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9Z" />
-    <path d="M10 20a2 2 0 0 0 4 0" />
-  </Icon>
-);
 const IconChevron = (p: { className?: string }) => (
   <Icon className={p.className}>
     <path d="m6 9 6 6 6-6" />
@@ -203,7 +197,7 @@ export interface AdminShellProps {
   userEmail?: string;
 }
 
-export default function AdminShell({ children, alertCount = 0, userEmail }: AdminShellProps) {
+export default function AdminShell({ children, userEmail }: AdminShellProps) {
   const pathname = usePathname() ?? "/admin";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -251,13 +245,10 @@ export default function AdminShell({ children, alertCount = 0, userEmail }: Admi
   }, [pathname]);
 
   return (
-    <main className="flex-1 min-h-screen bg-gradient-to-b from-brand-light/60 via-white to-brand-light/40 pt-32 sm:pt-36 md:pt-40">
-      <div className="container-page pb-12 sm:pb-16 md:pb-20">
+    <main className="flex-1 bg-grid-gray pt-40 sm:pt-44 md:pt-48">
+      <div className="container-page pb-6 sm:pb-8 md:pb-10">
         {/* ===== Header card ===== */}
         <div className="relative rounded-2xl border border-gray-200/80 bg-white shadow-sm overflow-visible">
-          {/* top accent strip */}
-          <div className="h-1 w-full bg-gradient-to-r from-brand-orange via-brand-dark-orange to-brand-orange rounded-t-2xl" />
-
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 sm:px-7 py-5">
             {/* Title block */}
             <div className="min-w-0">
@@ -288,20 +279,6 @@ export default function AdminShell({ children, alertCount = 0, userEmail }: Admi
               >
                 <IconHome className="w-4 h-4" />
                 <span className="hidden sm:inline">Dashboard</span>
-              </Link>
-
-              {/* Alerts badge */}
-              <Link
-                href="/admin/users"
-                aria-label={`${alertCount} pending alerts`}
-                className="relative inline-flex items-center justify-center w-10 h-10 rounded-lg bg-brand-light/70 text-brand-dark hover:bg-brand-dark hover:text-white transition-all duration-200"
-              >
-                <IconBell className="w-4 h-4" />
-                {alertCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-orange text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
-                    {alertCount > 99 ? "99+" : alertCount}
-                  </span>
-                )}
               </Link>
 
               {/* Gear menu trigger */}

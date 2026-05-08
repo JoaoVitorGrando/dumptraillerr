@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import {
   DEMO_FLEET,
   DEMO_OWNER_EARNINGS,
@@ -82,6 +83,73 @@ export default async function OwnerDashboard() {
   const totalEarnings = earnings.reduce((s, e) => s + e.net, 0);
   const availableCount = fleet.filter((t) => t.status === "available").length;
   const rentedCount = fleet.filter((t) => t.status === "rented").length;
+
+  let logisticsRows: Array<{
+    id: string;
+    trailerName: string;
+    status: string;
+    type: string;
+    toLocation: string;
+  }> = [];
+  let trailerLocationRows: Array<{
+    id: string;
+    trailerName: string;
+    locationType: string;
+    locationLabel: string;
+  }> = [];
+
+  try {
+    const owner = await prisma.ownerProfile.findFirst({
+      where: { user: { email: user.email ?? "" } },
+      select: { id: true },
+    });
+    if (owner) {
+      const [ownerTrailers, ownerOrders] = await Promise.all([
+        prisma.trailer.findMany({
+          where: { ownerId: owner.id },
+          select: {
+            id: true,
+            name: true,
+            currentLocationType: true,
+            currentLocationLabel: true,
+          },
+          take: 8,
+        }),
+        prisma.logisticsOrder.findMany({
+          where: {
+            trailer: { ownerId: owner.id },
+            status: { in: ["PENDING", "ASSIGNED", "IN_PROGRESS"] },
+          },
+          orderBy: [{ status: "desc" }, { sequence: "asc" }],
+          take: 6,
+          select: {
+            id: true,
+            status: true,
+            type: true,
+            toLocationLabel: true,
+            trailer: { select: { name: true } },
+          },
+        }),
+      ]);
+
+      trailerLocationRows = ownerTrailers.map((t) => ({
+        id: t.id,
+        trailerName: t.name,
+        locationType: t.currentLocationType,
+        locationLabel: t.currentLocationLabel ?? "No location reported yet",
+      }));
+      logisticsRows = ownerOrders.map((o) => ({
+        id: o.id,
+        trailerName: o.trailer.name,
+        status: o.status,
+        type: o.type,
+        toLocation: o.toLocationLabel,
+      }));
+    }
+  } catch {
+    logisticsRows = [];
+    trailerLocationRows = [];
+  }
 
   return (
     <div>
@@ -178,6 +246,49 @@ export default async function OwnerDashboard() {
           </div>
         </div>
       </div>
+
+      {(trailerLocationRows.length > 0 || logisticsRows.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-br from-brand-light/40 to-white">
+              <h2 className="font-display font-bold text-brand-dark text-base">Current Trailer Location</h2>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {trailerLocationRows.map((row) => (
+                <div key={row.id} className="px-5 py-3">
+                  <p className="text-sm font-semibold text-brand-dark">{row.trailerName}</p>
+                  <p className="text-xs text-brand-gray">
+                    {row.locationType} · {row.locationLabel}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-br from-brand-light/40 to-white">
+              <h2 className="font-display font-bold text-brand-dark text-base">Active Logistics Queue</h2>
+            </div>
+            {logisticsRows.length === 0 ? (
+              <p className="px-5 py-6 text-sm text-brand-gray">No active logistics orders right now.</p>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {logisticsRows.map((row) => (
+                  <div key={row.id} className="px-5 py-3">
+                    <p className="text-sm font-semibold text-brand-dark">
+                      {row.trailerName} · {row.type}
+                    </p>
+                    <p className="text-xs text-brand-gray">{row.toLocation}</p>
+                    <p className="text-[10px] mt-1 font-bold uppercase tracking-wider text-brand-orange">
+                      {row.status}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Quick links */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

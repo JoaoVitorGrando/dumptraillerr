@@ -87,7 +87,8 @@ const IconUsers = (
 );
 
 export default async function AdminPage() {
-  await expireStaleBookings();
+  // Keep stale booking cleanup in the background to avoid blocking first paint.
+  void expireStaleBookings().catch(() => null);
 
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -106,6 +107,8 @@ export default async function AdminPage() {
     pendingDrivers,
     recentBookings,
     recentTrailers,
+    logisticsQueue,
+    trailersInTransit,
   ] = await Promise.all([
     prisma.booking.count({ where: { serviceDate: { gte: startOfToday } } }),
     prisma.booking.count({ where: { status: { in: ["CONFIRMED", "IN_PROGRESS"] } } }),
@@ -136,7 +139,31 @@ export default async function AdminPage() {
     prisma.trailer.findMany({
       take: 6,
       orderBy: { createdAt: "asc" },
-      select: { id: true, name: true, size: true, status: true, images: true },
+      select: {
+        id: true,
+        name: true,
+        size: true,
+        status: true,
+        images: true,
+        currentLocationType: true,
+        currentLocationLabel: true,
+      },
+    }),
+    prisma.logisticsOrder.findMany({
+      where: { status: { in: ["PENDING", "ASSIGNED", "IN_PROGRESS"] } },
+      orderBy: [{ status: "desc" }, { scheduledAt: "asc" }, { sequence: "asc" }],
+      take: 8,
+      select: {
+        id: true,
+        type: true,
+        status: true,
+        toLocationLabel: true,
+        trailer: { select: { name: true } },
+        booking: { select: { id: true } },
+      },
+    }),
+    prisma.trailer.count({
+      where: { currentLocationType: "IN_TRANSIT" },
     }),
   ]);
 
@@ -192,6 +219,42 @@ export default async function AdminPage() {
           icon={IconUsers}
           warn={pendingApprovals > 0}
         />
+      </div>
+
+      <div className="mb-4 sm:mb-5 bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-br from-brand-light/40 to-white">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex w-7 h-7 rounded-md bg-brand-orange/10 text-brand-orange items-center justify-center">
+              {IconTruck}
+            </span>
+            <h2 className="font-display font-bold text-brand-dark text-base">Dispatch Queue</h2>
+          </div>
+          <span className="text-xs font-semibold text-brand-gray">
+            Trailers in transit: {trailersInTransit}
+          </span>
+        </div>
+        {logisticsQueue.length === 0 ? (
+          <p className="px-5 py-8 text-sm text-brand-gray">No active logistics orders.</p>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {logisticsQueue.map((order) => (
+              <div
+                key={order.id}
+                className="flex items-center gap-3 px-5 py-3 hover:bg-brand-light/30 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-brand-dark truncate">
+                    {order.trailer.name} · {order.type}
+                  </p>
+                  <p className="text-xs text-brand-gray truncate">{order.toLocationLabel}</p>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-brand-orange/10 text-brand-orange border-brand-orange/30">
+                  {order.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Alerts */}
@@ -322,6 +385,12 @@ export default async function AdminPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-brand-dark">{t.name}</p>
                     <p className="text-xs text-brand-gray">{t.size}</p>
+                    <p className="text-[11px] text-brand-gray truncate">
+                      Location:{" "}
+                      {t.currentLocationLabel
+                        ? `${t.currentLocationType} · ${t.currentLocationLabel}`
+                        : t.currentLocationType}
+                    </p>
                   </div>
                   <span
                     className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0 ${

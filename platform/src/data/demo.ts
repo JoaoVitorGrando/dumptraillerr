@@ -55,18 +55,18 @@ export interface DemoJob {
   notes?: string;
   photos: string[];
   signatureObtained: boolean;
-}
-
-export interface DemoUser {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  approvalStatus: ApprovalStatus;
-  createdAt: string;
-  phone?: string;
-  totalBookings?: number;
-  totalEarnings?: number; // cents
+  logistics?: {
+    trailerId?: string;
+    orderId?: string;
+    orderType?: "PICKUP" | "DISPOSAL" | "DROPOFF" | "REPOSITION";
+    fromLocation?: string;
+    toLocation?: string;
+    wasteDropLocation?: string | null;
+    nextStopLocation?: string | null;
+    nextOrderId?: string | null;
+    nextOrderType?: "PICKUP" | "DISPOSAL" | "DROPOFF" | "REPOSITION" | null;
+    nextOrderToLocation?: string | null;
+  };
 }
 
 export interface DemoEarning {
@@ -77,59 +77,6 @@ export interface DemoEarning {
 }
 
 // ─── DADOS DEMO ──────────────────────────────────────────────────────────────
-
-export const DEMO_BOOKINGS: DemoBooking[] = [
-  {
-    id: "bk_001",
-    createdAt: "2026-04-28T14:22:00Z",
-    status: "completed",
-    trailer: { size: "7×14", name: "7×14 Dump Trailer", image: "/assets/7x14.png" },
-    deliveryDate: "2026-04-30",
-    pickupDate: "2026-05-02",
-    address: "1420 NW 57th St",
-    city: "Seattle, WA 98107",
-    totalAmount: 35000,
-    paymentStatus: "paid",
-    stripeSessionId: "cs_demo_001",
-    notes: "Gate code: 1234",
-  },
-  {
-    id: "bk_002",
-    createdAt: "2026-05-01T09:10:00Z",
-    status: "active",
-    trailer: { size: "7×16", name: "7×16 Dump Trailer", image: "/assets/7x16.png" },
-    deliveryDate: "2026-05-03",
-    pickupDate: "2026-05-06",
-    address: "3201 Eastlake Ave E",
-    city: "Seattle, WA 98102",
-    totalAmount: 52500,
-    paymentStatus: "paid",
-  },
-  {
-    id: "bk_003",
-    createdAt: "2026-05-04T17:45:00Z",
-    status: "confirmed",
-    trailer: { size: "7×12", name: "7×12 Dump Trailer", image: "/assets/7x12.png" },
-    deliveryDate: "2026-05-08",
-    pickupDate: "2026-05-10",
-    address: "872 S Lucile St",
-    city: "Seattle, WA 98108",
-    totalAmount: 29000,
-    paymentStatus: "paid",
-  },
-  {
-    id: "bk_004",
-    createdAt: "2026-05-05T11:00:00Z",
-    status: "pending",
-    trailer: { size: "8×20", name: "8×20 Dump Trailer", image: "/assets/8x20.png" },
-    deliveryDate: "2026-05-12",
-    pickupDate: "2026-05-15",
-    address: "5401 Leary Ave NW",
-    city: "Seattle, WA 98107",
-    totalAmount: 87500,
-    paymentStatus: "pending",
-  },
-];
 
 export const DEMO_FLEET: DemoTrailer[] = [
   {
@@ -263,65 +210,6 @@ export const DEMO_OWNER_EARNINGS: DemoEarning[] = [
   { period: "Mar 2026", gross: 245000, net: 208250, trips: 14 },
   { period: "Apr 2026", gross: 220000, net: 187000, trips: 13 },
   { period: "May 2026", gross: 87500, net: 74375, trips: 5 },
-];
-
-export const DEMO_USERS: DemoUser[] = [
-  {
-    id: "u_001",
-    name: "Marcus Webb",
-    email: "marcus@example.com",
-    role: "customer",
-    approvalStatus: "approved",
-    createdAt: "2026-02-10",
-    phone: "+1 (206) 555-0101",
-    totalBookings: 5,
-  },
-  {
-    id: "u_002",
-    name: "Lisa Park",
-    email: "lisa@example.com",
-    role: "owner",
-    approvalStatus: "pending",
-    createdAt: "2026-05-01",
-    phone: "+1 (206) 555-0102",
-    totalEarnings: 0,
-  },
-  {
-    id: "u_003",
-    name: "Jordan Ellis",
-    email: "jordan@example.com",
-    role: "driver",
-    approvalStatus: "pending",
-    createdAt: "2026-05-03",
-    phone: "+1 (206) 555-0103",
-  },
-  {
-    id: "u_004",
-    name: "Priya Sharma",
-    email: "priya@example.com",
-    role: "customer",
-    approvalStatus: "approved",
-    createdAt: "2026-03-15",
-    totalBookings: 3,
-  },
-  {
-    id: "u_005",
-    name: "Ben Nakamura",
-    email: "ben@example.com",
-    role: "driver",
-    approvalStatus: "approved",
-    createdAt: "2026-01-20",
-    totalEarnings: 185000,
-  },
-  {
-    id: "u_006",
-    name: "Sara Johansson",
-    email: "sara@example.com",
-    role: "owner",
-    approvalStatus: "approved",
-    createdAt: "2026-01-05",
-    totalEarnings: 957500,
-  },
 ];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
