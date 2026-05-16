@@ -14,6 +14,28 @@ function getRoleHome(role: UserRole) {
   return `/dashboard/${role}`;
 }
 
+const PROTECTED_PREFIXES = [
+  "/dashboard/customer",
+  "/dashboard/owner",
+  "/dashboard/driver",
+  "/admin",
+] as const;
+
+function redirectToLogin(request: NextRequest, path: string) {
+  const loginUrl = request.nextUrl.clone();
+  loginUrl.pathname = "/auth/login";
+  loginUrl.searchParams.set("redirectTo", `${path}${request.nextUrl.search}`);
+  return NextResponse.redirect(loginUrl);
+}
+
+/** Sem Supabase configurado: site público abre; rotas protegidas vão para login. */
+function handleWithoutSupabase(request: NextRequest, path: string) {
+  if (PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix))) {
+    return redirectToLogin(request, path);
+  }
+  return NextResponse.next({ request });
+}
+
 /**
  * Middleware de autenticação e proteção de rotas.
  * Roda em todas as rotas configuradas no matcher abaixo.
@@ -27,34 +49,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
-  // Dev local sem .env: rotas públicas seguem; painéis exigem credenciais depois.
-  if (
-    process.env.NODE_ENV !== "production" &&
-    (!supabaseUrl || !supabaseAnonKey)
-  ) {
-    const protectedPrefixes = [
-      "/dashboard/customer",
-      "/dashboard/owner",
-      "/dashboard/driver",
-      "/admin",
-    ];
-    if (protectedPrefixes.some((prefix) => path.startsWith(prefix))) {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = "/auth/login";
-      loginUrl.searchParams.set("redirectTo", `${path}${request.nextUrl.search}`);
-      return NextResponse.redirect(loginUrl);
-    }
-    return NextResponse.next({ request });
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return handleWithoutSupabase(request, path);
   }
 
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    supabaseUrl!,
-    supabaseAnonKey!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -78,21 +84,10 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Rotas protegidas — redireciona para login se não autenticado
-  const protectedPrefixes = [
-    "/dashboard/customer",
-    "/dashboard/owner",
-    "/dashboard/driver",
-    "/admin",
-  ];
-
-  const isProtected = protectedPrefixes.some((prefix) => path.startsWith(prefix));
+  const isProtected = PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix));
 
   if (isProtected && !user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/auth/login";
-    loginUrl.searchParams.set("redirectTo", `${path}${request.nextUrl.search}`);
-    return NextResponse.redirect(loginUrl);
+    return redirectToLogin(request, path);
   }
 
   if (user) {
