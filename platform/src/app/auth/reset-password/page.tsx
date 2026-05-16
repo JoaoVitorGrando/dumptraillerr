@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -12,18 +13,29 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
 
-  const supabase = createClient();
+  const authReady = isSupabaseConfigured();
 
   useEffect(() => {
-    // Supabase sets the session from the URL hash on this page
-    supabase.auth.onAuthStateChange((event) => {
+    if (!authReady) return;
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setReady(true);
     });
-  }, [supabase]);
+    return () => subscription.unsubscribe();
+  }, [authReady]);
 
   async function handleReset(e: React.FormEvent) {
     e.preventDefault();
+    if (!authReady) {
+      setError("Redefinição indisponível até configurar o Supabase na Vercel.");
+      return;
+    }
+
     setError("");
+
+    const supabase = createClient();
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -10,12 +11,19 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
-  const supabase = createClient();
+  const authReady = isSupabaseConfigured();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!authReady) {
+      setError("Recuperação de senha indisponível até configurar o Supabase na Vercel.");
+      return;
+    }
+
     setLoading(true);
     setError("");
+
+    const supabase = createClient();
 
     const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`,

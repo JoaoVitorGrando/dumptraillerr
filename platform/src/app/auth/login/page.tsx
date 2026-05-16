@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 type UserRole = "customer" | "owner" | "driver" | "admin";
 
@@ -28,12 +29,21 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const supabase = createClient();
+  const authReady = isSupabaseConfigured();
 
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
+    if (!authReady) {
+      setError(
+        "Login indisponível: configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY na Vercel e faça redeploy."
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
+
+    const supabase = createClient();
 
     const { error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -118,7 +128,7 @@ function LoginForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !authReady}
             className="btn-primary w-full mt-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             {loading ? (
@@ -138,11 +148,12 @@ function LoginForm() {
         </p>
       </div>
 
-      {/* Demo notice */}
-      <p className="mt-4 text-center text-xs text-white/55 opacity-90">
-        Auth requires Supabase configuration.{" "}
-        <span className="italic">Platform in setup mode.</span>
-      </p>
+      {!authReady && (
+        <p className="mt-4 text-center text-xs text-amber-200/90 bg-amber-950/40 border border-amber-500/30 rounded-lg px-3 py-2">
+          Login em modo de configuração. Adicione as variáveis Supabase no projeto{" "}
+          <span className="font-semibold">dumptrailler-platform</span> na Vercel e redeploy.
+        </p>
+      )}
     </div>
   );
 }

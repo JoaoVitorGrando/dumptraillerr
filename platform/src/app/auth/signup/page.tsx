@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 type Role = "customer" | "owner" | "driver";
 
@@ -48,11 +49,20 @@ function SignupForm() {
   const [resending, setResending] = useState(false);
   const [resendMsg, setResendMsg] = useState("");
 
-  const supabase = createClient();
+  const authReady = isSupabaseConfigured();
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
+    if (!authReady) {
+      setError(
+        "Cadastro indisponível: configure as variáveis Supabase na Vercel e faça redeploy."
+      );
+      return;
+    }
+
     setError("");
+
+    const supabase = createClient();
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
@@ -129,9 +139,11 @@ function SignupForm() {
 
   if (success) {
     async function handleResendEmail() {
+      if (!authReady) return;
       setResending(true);
       setResendMsg("");
 
+      const supabase = createClient();
       const { error: resendError } = await supabase.auth.resend({
         type: "signup",
         email,
@@ -374,7 +386,7 @@ function SignupForm() {
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !authReady}
                 className="btn-primary flex-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
                 {loading ? <Spinner /> : "Create Account"}
