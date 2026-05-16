@@ -1,9 +1,0 @@
-{
-  "name": "dumptraillerr",
-  "private": true,
-  "workspaces": ["platform"],
-  "scripts": {
-    "build": "npm run build --workspace=fagu-platform",
-    "dev": "npm run dev --workspace=fagu-platform"
-  }
-}
