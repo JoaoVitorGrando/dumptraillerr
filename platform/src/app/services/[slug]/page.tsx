@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { findPublicService } from "@/data/services";
@@ -33,9 +34,9 @@ export default async function ServicePage({ params }: Props) {
             <span className="section-eyebrow inline-block">{service.badge}</span>
             <h1 className="section-title">{service.name}</h1>
             <p className="mt-4 text-white/75 text-lg">{service.short}</p>
-            <a href="/partner/customer" className="btn-primary mt-8 inline-flex">
+            <Link href="/partner/customer" className="btn-primary mt-8 inline-flex">
               Join the waitlist
-            </a>
+            </Link>
           </div>
         </section>
       </main>

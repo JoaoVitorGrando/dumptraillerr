@@ -10,7 +10,7 @@ async function requireDriver() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
 
   const role = String(user.user_metadata?.role ?? "").toLowerCase();

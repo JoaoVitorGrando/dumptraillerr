@@ -44,11 +44,15 @@ function envForParse(source: NodeJS.ProcessEnv) {
   );
 }
 
-// Em desenvolvimento, usa parse parcial para não bloquear antes das credenciais
-const _parsed =
-  process.env.NODE_ENV === "production"
-    ? envSchema.parse(envForParse(process.env))
-    : envSchema.partial().parse(envForParse(process.env));
+// Durante `next build` o Next coleta page data executando módulos; nesse momento
+// nem sempre temos as ENV (ex.: preview sem secrets). Validamos estritamente
+// apenas em runtime de produção; em build/dev usamos parse parcial.
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+const strict = process.env.NODE_ENV === "production" && !isBuildPhase;
+
+const _parsed = strict
+  ? envSchema.parse(envForParse(process.env))
+  : envSchema.partial().parse(envForParse(process.env));
 
 export const env = _parsed as z.infer<typeof envSchema>;
 
