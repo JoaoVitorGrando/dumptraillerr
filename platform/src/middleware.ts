@@ -56,72 +56,69 @@ export async function middleware(request: NextRequest) {
     return handleWithoutSupabase(request, path);
   }
 
-  let supabaseResponse = NextResponse.next({ request });
+  try {
+    let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: { name: string; value: string; options?: object }[]) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
         },
       },
+    });
+
+    // Atualiza a sessão — IMPORTANTE: não remover
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const isProtected = PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix));
+
+    if (isProtected && !user) {
+      return redirectToLogin(request, path);
     }
-  );
 
-  // Atualiza a sessão — IMPORTANTE: não remover
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    if (user) {
+      const role = normalizeRole(user.user_metadata?.role);
+      const roleHome = getRoleHome(role);
 
-  const isProtected = PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix));
+      if (path === "/dashboard") {
+        return NextResponse.redirect(new URL(roleHome, request.url));
+      }
 
-  if (isProtected && !user) {
-    return redirectToLogin(request, path);
+      if (path.startsWith("/admin") && role !== "admin") {
+        return NextResponse.redirect(new URL(roleHome, request.url));
+      }
+
+      if (path.startsWith("/dashboard/customer") && role !== "customer") {
+        return NextResponse.redirect(new URL(roleHome, request.url));
+      }
+
+      if (path.startsWith("/dashboard/owner") && role !== "owner") {
+        return NextResponse.redirect(new URL(roleHome, request.url));
+      }
+
+      if (path.startsWith("/dashboard/driver") && role !== "driver") {
+        return NextResponse.redirect(new URL(roleHome, request.url));
+      }
+    }
+
+    if (user && (path.startsWith("/auth/login") || path.startsWith("/auth/signup"))) {
+      const role = normalizeRole(user.user_metadata?.role);
+      return NextResponse.redirect(new URL(getRoleHome(role), request.url));
+    }
+
+    return supabaseResponse;
+  } catch {
+    return handleWithoutSupabase(request, path);
   }
-
-  if (user) {
-    const role = normalizeRole(user.user_metadata?.role);
-    const roleHome = getRoleHome(role);
-
-    if (path === "/dashboard") {
-      return NextResponse.redirect(new URL(roleHome, request.url));
-    }
-
-    if (path.startsWith("/admin") && role !== "admin") {
-      return NextResponse.redirect(new URL(roleHome, request.url));
-    }
-
-    if (path.startsWith("/dashboard/customer") && role !== "customer") {
-      return NextResponse.redirect(new URL(roleHome, request.url));
-    }
-
-    if (path.startsWith("/dashboard/owner") && role !== "owner") {
-      return NextResponse.redirect(new URL(roleHome, request.url));
-    }
-
-    if (path.startsWith("/dashboard/driver") && role !== "driver") {
-      return NextResponse.redirect(new URL(roleHome, request.url));
-    }
-  }
-
-  // Usuário logado tentando acessar páginas de auth — redireciona para dashboard do papel
-  if (user && (path.startsWith("/auth/login") || path.startsWith("/auth/signup"))) {
-    const role = normalizeRole(user.user_metadata?.role);
-    return NextResponse.redirect(new URL(getRoleHome(role), request.url));
-  }
-
-  return supabaseResponse;
 }
 
 export const config = {
