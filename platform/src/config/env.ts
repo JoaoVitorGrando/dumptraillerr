@@ -38,11 +38,17 @@ const envSchema = z.object({
   NEXT_PUBLIC_CONTACT_HOURS: z.string().default("Mon–Sat · 7:00 AM – 7:00 PM"),
 });
 
+function envForParse(source: NodeJS.ProcessEnv) {
+  return Object.fromEntries(
+    Object.entries(source).filter(([, value]) => value != null && String(value).trim() !== "")
+  );
+}
+
 // Em desenvolvimento, usa parse parcial para não bloquear antes das credenciais
 const _parsed =
   process.env.NODE_ENV === "production"
-    ? envSchema.parse(process.env)
-    : envSchema.partial().parse(process.env);
+    ? envSchema.parse(envForParse(process.env))
+    : envSchema.partial().parse(envForParse(process.env));
 
 export const env = _parsed as z.infer<typeof envSchema>;
 

@@ -27,11 +27,34 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Dev local sem .env: rotas públicas seguem; painéis exigem credenciais depois.
+  if (
+    process.env.NODE_ENV !== "production" &&
+    (!supabaseUrl || !supabaseAnonKey)
+  ) {
+    const protectedPrefixes = [
+      "/dashboard/customer",
+      "/dashboard/owner",
+      "/dashboard/driver",
+      "/admin",
+    ];
+    if (protectedPrefixes.some((prefix) => path.startsWith(prefix))) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/auth/login";
+      loginUrl.searchParams.set("redirectTo", `${path}${request.nextUrl.search}`);
+      return NextResponse.redirect(loginUrl);
+    }
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl!,
+    supabaseAnonKey!,
     {
       cookies: {
         getAll() {
