@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { TRAILERS } from "@/data/trailers";
 
 const AUTOPLAY_MS = 5000;
 
-export default function Trailers() {
+function TrailersCarousel() {
   const searchParams = useSearchParams();
   const [idx, setIdx] = useState(0);
   const [fading, setFading] = useState(false);
@@ -211,6 +211,20 @@ export default function Trailers() {
         </div>
       </div>
     </section>
+  );
+}
+
+export default function Trailers() {
+  return (
+    <Suspense
+      fallback={
+        <section className="py-16 sm:py-20 bg-white">
+          <div className="container-page text-center text-brand-gray text-sm">Loading trailers…</div>
+        </section>
+      }
+    >
+      <TrailersCarousel />
+    </Suspense>
   );
 }
 
